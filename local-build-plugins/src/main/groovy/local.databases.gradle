@@ -384,5 +384,16 @@ ext {
                     'jdbc.url'   : 'jdbc:Altibase://' + dbHost + ':20300/mydb?force_clob_bind=true',
                     'jdbc.datasource' : 'Altibase.jdbc.driver.AltibaseDriver'
             ],
+            spanner : [
+                    'db.dialect'      : 'org.hibernate.dialect.SpannerDialect',
+                    'jdbc.driver'     : 'com.google.cloud.spanner.jdbc.JdbcDriver',
+                    'jdbc.user'       : '',        // Not used by Spanner
+                    'jdbc.pass'       : '',        // Not used by Spanner
+                    'connection.init_sql' : '',
+                    // Replace the placeholders with your values or provide them via environment
+                    // variables used by your build/run system.
+                    'jdbc.url'        : 'jdbc:cloudspanner:/projects/test-project/instances/test-instance/databases/test-db?autoConfigEmulator=true;lenient=true',
+                    'jdbc.datasource' : 'com.google.cloud.spanner.jdbc.JdbcDriver'
+            ],
     ]
 }
