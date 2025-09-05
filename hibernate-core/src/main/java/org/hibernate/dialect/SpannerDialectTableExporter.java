@@ -13,12 +13,14 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.hibernate.boot.Metadata;
+import org.hibernate.boot.model.relational.InitCommand;
 import org.hibernate.boot.model.relational.SqlStringGenerationContext;
 import org.hibernate.mapping.Column;
 import org.hibernate.mapping.Index;
 import org.hibernate.mapping.Table;
 import org.hibernate.tool.schema.spi.Exporter;
 
+import static java.util.Collections.addAll;
 import static org.hibernate.internal.util.collections.ArrayHelper.EMPTY_STRING_ARRAY;
 
 /**
@@ -61,7 +63,6 @@ class SpannerDialectTableExporter implements Exporter<Table> {
 			// the case corresponding to a sequence-table that will only have 1 row.
 			keyColumns = Collections.emptyList();
 		}
-
 		return getTableString( table, metadata, keyColumns, context );
 	}
 
@@ -83,6 +84,7 @@ class SpannerDialectTableExporter implements Exporter<Table> {
 		}
 
 		ArrayList<String> statements = new ArrayList<>();
+
 		statements.add(
 				MessageFormat.format(
 						this.createTableTemplate,
@@ -91,7 +93,9 @@ class SpannerDialectTableExporter implements Exporter<Table> {
 						primaryKeyColNames
 				)
 		);
-
+	for ( InitCommand initCommand : table.getInitCommands( context ) ) {
+			addAll( statements, initCommand.initCommands() );
+		}
 		return statements.toArray(EMPTY_STRING_ARRAY);
 	}
 
@@ -106,7 +110,7 @@ class SpannerDialectTableExporter implements Exporter<Table> {
 		ArrayList<String> dropStrings = new ArrayList<>();
 
 		for ( Index index : table.getIndexes().values() ) {
-			dropStrings.add( "drop index " + index.getName() );
+			dropStrings.add( "drop index if exists " + index.getName() );
 		}
 
 		dropStrings.add( this.spannerDialect.getDropTableString( context.format( table.getQualifiedTableName() ) ) );

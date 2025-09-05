@@ -2836,7 +2836,7 @@ public abstract class Dialect implements ConversionContext, TypeContributor, Fun
 	 * @return The command used to create a table.
 	 */
 	public String getCreateTableString() {
-		return "create table";
+		return "create table if not exists";
 	}
 
 	/**

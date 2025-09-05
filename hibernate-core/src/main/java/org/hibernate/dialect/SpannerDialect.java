@@ -895,6 +895,11 @@ public class SpannerDialect extends Dialect {
 		return false;
 	}
 
+@Override
+public boolean supportsIfExistsBeforeTableName() {
+	return true;
+}
+
 	/* Type conversion and casting */
 
 	/**
