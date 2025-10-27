@@ -666,6 +666,11 @@ public class SpannerDialect extends Dialect {
 	}
 
 	@Override
+	public String getTruncateTableStatement(String tableName) {
+		return "delete from " + tableName + " where true";
+	}
+
+	@Override
 	public boolean dropConstraints() {
 		return false;
 	}
