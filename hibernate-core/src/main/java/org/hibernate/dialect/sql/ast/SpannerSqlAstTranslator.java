@@ -13,6 +13,7 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.spi.AbstractSqlAstTranslator;
 import org.hibernate.sql.ast.spi.SqlSelection;
 import org.hibernate.sql.ast.tree.Statement;
+import org.hibernate.sql.ast.tree.delete.DeleteStatement;
 import org.hibernate.sql.ast.tree.expression.Expression;
 import org.hibernate.sql.ast.tree.expression.Literal;
 import org.hibernate.sql.ast.tree.expression.SqlTuple;
@@ -109,6 +110,18 @@ public class SpannerSqlAstTranslator<T extends JdbcOperation> extends AbstractSq
 		if ( correlated ) {
 			this.correlated = oldCorrelated;
 			appendSql( CLOSE_PARENTHESIS );
+		}
+	}
+
+	@Override
+	protected void visitDeleteStatementOnly(DeleteStatement statement) {
+		// Spanner requires a WHERE clause
+		if ( statement.getRestriction() == null ) {
+			renderDeleteClause( statement );
+			appendSql( " where true" );
+		}
+		else {
+			super.visitDeleteStatementOnly( statement );
 		}
 	}
 

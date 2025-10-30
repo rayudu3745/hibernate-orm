@@ -900,8 +900,8 @@ public class SpannerDialect extends Dialect {
 		return false;
 	}
 
-@Override
-public boolean supportsIfExistsBeforeTableName() {
+	@Override
+	public boolean supportsIfExistsBeforeTableName() {
 	return true;
 }
 
