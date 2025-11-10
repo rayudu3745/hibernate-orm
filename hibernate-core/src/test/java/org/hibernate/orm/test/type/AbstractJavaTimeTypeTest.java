@@ -109,7 +109,7 @@ public abstract class AbstractJavaTimeTypeTest<T, E> extends BaseCoreFunctionalT
 	@Before
 	public void cleanup() {
 		inTransaction( session -> {
-			session.createNativeQuery( "DELETE FROM " + ENTITY_NAME ).executeUpdate();
+			session.createQuery( "DELETE FROM " + ENTITY_NAME ).executeUpdate();
 		} );
 	}
 

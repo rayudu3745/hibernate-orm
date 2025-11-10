@@ -465,7 +465,7 @@ public class EntityManagerTest extends BaseEntityManagerFunctionalTestCase {
 		w.setSerial("0324");
 		em.persist(w);
 		Wallet wallet = em.find( Wallet.class, w.getSerial() );
-		em.createNativeQuery("delete from Wallet").executeUpdate();
+		em.createQuery("delete from Wallet").executeUpdate();
 		try {
 			em.refresh(wallet);
 		} catch (EntityNotFoundException enfe) {

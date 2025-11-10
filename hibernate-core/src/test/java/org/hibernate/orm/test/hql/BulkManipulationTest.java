@@ -433,7 +433,7 @@ public class BulkManipulationTest extends BaseCoreFunctionalTestCase {
 		t.commit();
 		t = s.beginTransaction();
 
-		int deleteCount = s.createNativeQuery( "delete from Truck" ).executeUpdate();
+		int deleteCount = s.createQuery( "delete from Truck" ).executeUpdate();
 		assertEquals( 1, deleteCount );
 
 		l = s.createQuery( "from Vehicle" ).list();

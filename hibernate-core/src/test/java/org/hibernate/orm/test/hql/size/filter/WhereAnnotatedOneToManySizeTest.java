@@ -84,7 +84,7 @@ public class WhereAnnotatedOneToManySizeTest extends BaseCoreFunctionalTestCase 
 	@After
 	public void after() {
 		inTransaction( session -> {
-			session.createNativeQuery( "DELETE FROM City" ).executeUpdate();
+			session.createQuery( "DELETE FROM City" ).executeUpdate();
 			session.createQuery( "DELETE FROM Region c" ).executeUpdate();
 		} );
 	}
