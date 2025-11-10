@@ -187,7 +187,7 @@ public class SpannerDialect extends Dialect {
 
 	@Override
 	public boolean supportsStandardArrays() {
-		return true;
+		return false;
 	}
 
 	@Override
