@@ -25,6 +25,8 @@ import org.hibernate.dialect.pagination.LimitOffsetLimitHandler;
 import org.hibernate.dialect.sql.ast.SpannerSqlAstTranslator;
 import org.hibernate.dialect.unique.UniqueDelegate;
 import org.hibernate.engine.jdbc.dialect.spi.DialectResolutionInfo;
+import org.hibernate.engine.jdbc.env.spi.IdentifierHelper;
+import org.hibernate.engine.jdbc.env.spi.IdentifierHelperBuilder;
 import org.hibernate.engine.jdbc.env.spi.SchemaNameResolver;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -50,6 +52,8 @@ import org.hibernate.type.BasicType;
 import org.hibernate.type.BasicTypeRegistry;
 import org.hibernate.type.StandardBasicTypes;
 
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.Map;
 
@@ -904,6 +908,14 @@ public class SpannerDialect extends Dialect {
 	public boolean supportsIfExistsBeforeTableName() {
 	return true;
 }
+
+	@Override
+	public IdentifierHelper buildIdentifierHelper(
+			IdentifierHelperBuilder builder,
+			DatabaseMetaData metadata) throws SQLException {
+		builder.setAutoQuoteDollar( true );
+        return super.buildIdentifierHelper( builder, metadata );
+	}
 
 	/* Type conversion and casting */
 
