@@ -22,6 +22,7 @@ import org.hibernate.sql.ast.tree.from.DerivedTableReference;
 import org.hibernate.sql.ast.tree.select.QueryPart;
 import org.hibernate.sql.ast.tree.select.QuerySpec;
 import org.hibernate.sql.ast.tree.select.SelectClause;
+import org.hibernate.sql.ast.tree.update.UpdateStatement;
 import org.hibernate.sql.exec.spi.JdbcOperation;
 
 /**
@@ -122,6 +123,20 @@ public class SpannerSqlAstTranslator<T extends JdbcOperation> extends AbstractSq
 		}
 		else {
 			super.visitDeleteStatementOnly( statement );
+		}
+	}
+
+	@Override
+	protected void visitUpdateStatementOnly(UpdateStatement statement) {
+		// Spanner requires a WHERE clause
+		if ( statement.getRestriction() == null ) {
+			renderUpdateClause( statement );
+			renderSetClause( statement.getAssignments() );
+			appendSql( " where true" );
+			visitReturningColumns( statement.getReturningColumns() );
+		}
+		else {
+			super.visitUpdateStatementOnly( statement );
 		}
 	}
 
