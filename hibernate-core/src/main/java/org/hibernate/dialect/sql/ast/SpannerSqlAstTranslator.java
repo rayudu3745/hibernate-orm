@@ -117,7 +117,7 @@ public class SpannerSqlAstTranslator<T extends JdbcOperation> extends AbstractSq
 	@Override
 	protected void visitDeleteStatementOnly(DeleteStatement statement) {
 		// Spanner requires a WHERE clause
-		if ( statement.getRestriction() == null ) {
+		if ( statement.getRestriction() == null || statement.getRestriction().isEmpty() ) {
 			renderDeleteClause( statement );
 			appendSql( " where true" );
 		}
@@ -129,7 +129,7 @@ public class SpannerSqlAstTranslator<T extends JdbcOperation> extends AbstractSq
 	@Override
 	protected void visitUpdateStatementOnly(UpdateStatement statement) {
 		// Spanner requires a WHERE clause
-		if ( statement.getRestriction() == null ) {
+		if ( statement.getRestriction() == null || statement.getRestriction().isEmpty() ) {
 			renderUpdateClause( statement );
 			renderSetClause( statement.getAssignments() );
 			appendSql( " where true" );

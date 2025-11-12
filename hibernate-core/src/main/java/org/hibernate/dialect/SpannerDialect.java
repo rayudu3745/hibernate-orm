@@ -23,6 +23,8 @@ import org.hibernate.dialect.lock.spi.LockingSupport;
 import org.hibernate.dialect.pagination.LimitHandler;
 import org.hibernate.dialect.pagination.LimitOffsetLimitHandler;
 import org.hibernate.dialect.sql.ast.SpannerSqlAstTranslator;
+import org.hibernate.dialect.temptable.SpannerTemporaryTableExporter;
+import org.hibernate.dialect.temptable.TemporaryTableExporter;
 import org.hibernate.dialect.unique.UniqueDelegate;
 import org.hibernate.engine.jdbc.dialect.spi.DialectResolutionInfo;
 import org.hibernate.engine.jdbc.env.spi.IdentifierHelper;
@@ -103,6 +105,9 @@ public class SpannerDialect extends Dialect {
 	private static final EmptyExporter NOOP_EXPORTER = new EmptyExporter();
 
 	private static final UniqueDelegate NOOP_UNIQUE_DELEGATE = new DoNothingUniqueDelegate();
+
+	private final TemporaryTableExporter temporaryTableExporter = new SpannerTemporaryTableExporter( this );
+
 
 	public SpannerDialect() {
 		super( ZERO_VERSION );
@@ -914,7 +919,11 @@ public class SpannerDialect extends Dialect {
 			IdentifierHelperBuilder builder,
 			DatabaseMetaData metadata) throws SQLException {
 		builder.setAutoQuoteDollar( true );
-        return super.buildIdentifierHelper( builder, metadata );
+		return super.buildIdentifierHelper( builder, metadata );
+	}
+
+	public TemporaryTableExporter getTemporaryTableExporter() {
+		return temporaryTableExporter;
 	}
 
 	/* Type conversion and casting */
