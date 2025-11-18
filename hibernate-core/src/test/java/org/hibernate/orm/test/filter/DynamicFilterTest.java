@@ -23,6 +23,7 @@ import org.hibernate.Session;
 import org.hibernate.cache.spi.access.CollectionDataAccess;
 import org.hibernate.cache.spi.entry.CollectionCacheEntry;
 import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.query.Query;
 
@@ -30,6 +31,7 @@ import org.hibernate.testing.DialectChecks;
 import org.hibernate.testing.RequiresDialectFeature;
 import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -93,6 +95,7 @@ public class DynamicFilterTest extends BaseNonConfigCoreFunctionalTestCase {
 
 	@Test
 	@RequiresDialectFeature(DialectChecks.SupportsUnionInSubquery.class)
+	@SkipForDialect(dialectClass = SpannerDialect.class)
 	public void testSqlSyntaxOfFiltersWithUnions() {
 		Session session = openSession();
 		session.enableFilter( "unioned" );

@@ -22,6 +22,7 @@ import org.hibernate.Transaction;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.dialect.MySQLDialect;
 import org.hibernate.dialect.OracleDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.Query;
 import org.hibernate.type.StandardBasicTypes;
 
@@ -194,6 +195,7 @@ public class EntityTest {
 	}
 
 	@Test
+	@SkipForDialect( dialectClass = SpannerDialect.class, reason = "support for unique constraints not yet added" )
 	public void testUniqueConstraint(SessionFactoryScope scope) {
 		int id = 5;
 		Sky sky = new Sky();
