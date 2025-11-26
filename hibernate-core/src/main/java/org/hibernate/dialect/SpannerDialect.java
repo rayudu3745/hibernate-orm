@@ -8,6 +8,7 @@ import jakarta.persistence.TemporalType;
 import jakarta.persistence.Timeout;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
+import org.hibernate.ScrollMode;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.model.FunctionContributions;
@@ -955,6 +956,11 @@ public class SpannerDialect extends Dialect {
 	@Override
 	public DmlTargetColumnQualifierSupport getDmlTargetColumnQualifierSupport() {
 		return DmlTargetColumnQualifierSupport.TABLE_ALIAS;
+	}
+
+	@Override
+	public ScrollMode defaultScrollMode() {
+		return ScrollMode.FORWARD_ONLY;
 	}
 
 //	@Override
