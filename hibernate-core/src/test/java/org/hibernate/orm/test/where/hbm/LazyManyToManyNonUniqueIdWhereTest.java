@@ -12,8 +12,10 @@ import java.util.Set;
 
 import org.hibernate.Hibernate;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -159,6 +161,7 @@ public class LazyManyToManyNonUniqueIdWhereTest extends BaseCoreFunctionalTestCa
 
 	@Test
 	@JiraKey( value = "HHH-12875")
+	@SkipForDialect( dialectClass = SpannerDialect.class, reason = "Spanner does not varchar syntax for type declaration")
 	public void testInitializeFromUniqueAssociationTable() {
 		doInHibernate(
 				this::sessionFactory, session -> {
@@ -186,6 +189,7 @@ public class LazyManyToManyNonUniqueIdWhereTest extends BaseCoreFunctionalTestCa
 
 	@Test
 	@JiraKey( value = "HHH-12875")
+	@SkipForDialect( dialectClass = SpannerDialect.class, reason = "Spanner does not varchar syntax for type declaration")
 	public void testInitializeFromNonUniqueAssociationTable() {
 		doInHibernate(
 				this::sessionFactory, session -> {

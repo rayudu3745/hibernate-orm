@@ -37,10 +37,14 @@ import org.hibernate.mapping.Column;
 import org.hibernate.mapping.ForeignKey;
 import org.hibernate.mapping.Table;
 import org.hibernate.mapping.UniqueKey;
+import org.hibernate.metamodel.mapping.EntityMappingType;
+import org.hibernate.metamodel.spi.RuntimeModelCreationContext;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.query.SemanticException;
 import org.hibernate.query.common.TemporalUnit;
 import org.hibernate.query.sqm.IntervalType;
+import org.hibernate.query.sqm.mutation.internal.inline.InlineMutationStrategy;
+import org.hibernate.query.sqm.mutation.spi.SqmMultiTableMutationStrategy;
 import org.hibernate.sql.ast.SqlAstTranslator;
 import org.hibernate.sql.ast.SqlAstTranslatorFactory;
 import org.hibernate.sql.ast.spi.LockingClauseStrategy;
@@ -130,11 +134,13 @@ public class SpannerDialect extends Dialect {
 				return "int64";
 
 			case REAL:
+				return "float32";
 			case FLOAT:
 			case DOUBLE:
+				return "float64";
 			case DECIMAL:
 			case NUMERIC:
-				return "float64";
+				return "numeric";
 
 			//there is no time type of any kind
 			case TIME:
@@ -798,6 +804,13 @@ public class SpannerDialect extends Dialect {
 	}
 
 	@Override
+	public SqmMultiTableMutationStrategy getFallbackSqmMutationStrategy(
+			EntityMappingType entityDescriptor,
+			RuntimeModelCreationContext runtimeModelCreationContext) {
+		return new InlineMutationStrategy( this );
+	}
+
+	@Override
 	public String getReadLockString(int timeout) {
 		throw new UnsupportedOperationException(
 				"Cloud Spanner does not support selecting for lock acquisition." );
@@ -919,12 +932,40 @@ public class SpannerDialect extends Dialect {
 			IdentifierHelperBuilder builder,
 			DatabaseMetaData metadata) throws SQLException {
 		builder.setAutoQuoteDollar( true );
+		builder.applyReservedWords( metadata );
+		builder.setAutoQuoteKeywords( true );
 		return super.buildIdentifierHelper( builder, metadata );
 	}
 
+	@Override
 	public TemporaryTableExporter getTemporaryTableExporter() {
 		return temporaryTableExporter;
 	}
+
+	@Override
+	public String getDual() {
+		return "unnest([1])";
+	}
+
+	@Override
+	public String getFromDualForSelectOnly() {
+		return " from " + getDual() + " dual";
+	}
+
+	@Override
+	public DmlTargetColumnQualifierSupport getDmlTargetColumnQualifierSupport() {
+		return DmlTargetColumnQualifierSupport.TABLE_ALIAS;
+	}
+
+//	@Override
+//	public String getSetOperatorSqlString(SetOperator operator) {
+//		return switch ( operator ) {
+//			case UNION -> "union distinct";
+//			case INTERSECT -> "intersect distinct";
+//			case EXCEPT -> "except distinct";
+//			default -> super.getSetOperatorSqlString( operator );
+//		};
+//	}
 
 	/* Type conversion and casting */
 

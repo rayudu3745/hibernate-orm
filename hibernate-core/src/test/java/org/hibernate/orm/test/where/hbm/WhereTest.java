@@ -65,8 +65,8 @@ public class WhereTest extends BaseCoreFunctionalTestCase {
 	public void removeTestData() {
 		inTransaction(
 				s -> {
-					s.createNativeQuery( "update T_FILE set parent = null" ).executeUpdate();
-					s.createNativeQuery( "delete from T_FILE" ).executeUpdate();
+					s.createNativeQuery( "update T_FILE set parent = null where 1=1" ).executeUpdate();
+					s.createNativeQuery( "delete from T_FILE where 1=1" ).executeUpdate();
 				}
 		);
 	}

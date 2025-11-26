@@ -95,7 +95,7 @@ public class DynamicFilterTest extends BaseNonConfigCoreFunctionalTestCase {
 
 	@Test
 	@RequiresDialectFeature(DialectChecks.SupportsUnionInSubquery.class)
-	@SkipForDialect(dialectClass = SpannerDialect.class)
+	@SkipForDialect( dialectClass = SpannerDialect.class, reason = "Spanner doesn't support union without all or distinct")
 	public void testSqlSyntaxOfFiltersWithUnions() {
 		Session session = openSession();
 		session.enableFilter( "unioned" );

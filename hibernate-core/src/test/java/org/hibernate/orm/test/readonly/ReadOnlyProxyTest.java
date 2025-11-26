@@ -40,6 +40,22 @@ import static org.junit.jupiter.api.Assertions.fail;
 )
 public class ReadOnlyProxyTest extends AbstractReadOnlyTest {
 
+
+	@Test
+	public void testCreateAndReadInDifferentTransaction(SessionFactoryScope scope) {
+		DataPoint dpOrig = createDataPoint(CacheMode.IGNORE, scope);
+
+		scope.inTransaction(session -> {
+			DataPoint dp = session.get(DataPoint.class, dpOrig.getId());
+			assertEquals(dpOrig.getId(), dp.getId());
+			assertEquals(dpOrig.getDescription(), dp.getDescription());
+			assertEquals(dpOrig.getX(), dp.getX());
+			assertEquals(dpOrig.getY(), dp.getY());
+			session.remove(dp); // cleanup
+		});
+	}
+
+
 	@Test
 	public void testReadOnlyViaSessionDoesNotInit(SessionFactoryScope scope) {
 		DataPoint dpOrig = createDataPoint( CacheMode.IGNORE, scope );
@@ -1085,8 +1101,8 @@ public class ReadOnlyProxyTest extends AbstractReadOnlyTest {
 		Transaction t = s.beginTransaction();
 		DataPoint dp = new DataPoint();
 		dp.setDescription( "original" );
-		dp.setX( new BigDecimal( 0.1d ).setScale( 19, BigDecimal.ROUND_DOWN ) );
-		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 19, BigDecimal.ROUND_DOWN ) );
+		dp.setX( new BigDecimal( 0.1d ).setScale( 9, BigDecimal.ROUND_DOWN ) );
+		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 9, BigDecimal.ROUND_DOWN ) );
 		s.persist( dp );
 		t.commit();
 		s.close();
@@ -1129,8 +1145,8 @@ public class ReadOnlyProxyTest extends AbstractReadOnlyTest {
 		Transaction t = s.beginTransaction();
 		DataPoint dp = new DataPoint();
 		dp.setDescription( "original" );
-		dp.setX( new BigDecimal( 0.1d ).setScale( 19, BigDecimal.ROUND_DOWN ) );
-		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 19, BigDecimal.ROUND_DOWN ) );
+		dp.setX( new BigDecimal( 0.1d ).setScale( 9, BigDecimal.ROUND_DOWN ) );
+		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 9, BigDecimal.ROUND_DOWN ) );
 		s.persist( dp );
 		t.commit();
 		s.close();
@@ -1890,8 +1906,8 @@ public class ReadOnlyProxyTest extends AbstractReadOnlyTest {
 		s.setCacheMode( cacheMode );
 		s.beginTransaction();
 		DataPoint dp = new DataPoint();
-		dp.setX( new BigDecimal( 0.1d ).setScale( 19, BigDecimal.ROUND_DOWN ) );
-		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 19, BigDecimal.ROUND_DOWN ) );
+		dp.setX( new BigDecimal( "0.1" ).setScale( 9, BigDecimal.ROUND_DOWN ));
+		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 9, BigDecimal.ROUND_DOWN ) );
 		dp.setDescription( "original" );
 		s.persist( dp );
 		s.getTransaction().commit();
