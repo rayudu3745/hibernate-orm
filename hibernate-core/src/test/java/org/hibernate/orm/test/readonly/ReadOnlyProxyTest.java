@@ -1906,8 +1906,8 @@ public class ReadOnlyProxyTest extends AbstractReadOnlyTest {
 		s.setCacheMode( cacheMode );
 		s.beginTransaction();
 		DataPoint dp = new DataPoint();
-		dp.setX( new BigDecimal( "0.1" ).setScale( 9, BigDecimal.ROUND_DOWN ));
-		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 9, BigDecimal.ROUND_DOWN ) );
+		dp.setX( new BigDecimal( "0.1" ).setScale( 9, BigDecimal.ROUND_DOWN ).stripTrailingZeros() );
+		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 9, BigDecimal.ROUND_DOWN ).stripTrailingZeros() );
 		dp.setDescription( "original" );
 		s.persist( dp );
 		s.getTransaction().commit();

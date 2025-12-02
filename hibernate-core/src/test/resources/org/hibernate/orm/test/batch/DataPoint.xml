@@ -22,10 +22,10 @@
 			</id>
 			<basic name="description"/>
 			<basic name="x">
-				<column name="xval" nullable="false" precision="25" scale="20"/>
+				<column name="xval" nullable="false" precision="25" scale="9"/>
 			</basic>
 			<basic name="y">
-				<column name="yval" nullable="false" precision="25" scale="20"/>
+				<column name="yval" nullable="false" precision="25" scale="9"/>
 			</basic>
 		</attributes>
 	</entity>

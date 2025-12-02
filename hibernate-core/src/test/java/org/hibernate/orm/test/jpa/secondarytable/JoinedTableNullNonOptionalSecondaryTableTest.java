@@ -90,10 +90,10 @@ public class JoinedTableNullNonOptionalSecondaryTableTest extends AbstractNonOpt
 	public void cleanupData() {
 		doInJPA(
 				this::entityManagerFactory, entityManager -> {
-					entityManager.createQuery( "delete from Details" ).executeUpdate();
-					entityManager.createQuery( "delete from MoreDetails" ).executeUpdate();
-					entityManager.createQuery( "delete from AnEntitySubclass" ).executeUpdate();
-					entityManager.createQuery( "delete from AnEntity" ).executeUpdate();
+					entityManager.createNativeQuery( "delete from Details where 1=1" ).executeUpdate();
+					entityManager.createNativeQuery( "delete from MoreDetails where 1=1" ).executeUpdate();
+					entityManager.createNativeQuery( "delete from AnEntitySubclass where 1=1" ).executeUpdate();
+					entityManager.createNativeQuery( "delete from AnEntity where 1=1" ).executeUpdate();
 				}
 		);
 	}

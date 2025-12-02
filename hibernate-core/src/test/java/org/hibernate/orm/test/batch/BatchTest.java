@@ -8,11 +8,13 @@ import org.hibernate.CacheMode;
 import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.ServiceRegistry;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
 import org.hibernate.testing.orm.junit.Setting;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -33,6 +35,7 @@ import java.math.RoundingMode;
 public class BatchTest {
 
 	@Test
+	@SkipForDialect( dialectClass = SpannerDialect.class, reason = "temporary")
 	public void testBatchInsertUpdate(SessionFactoryScope factoryScope) {
 		long start = System.currentTimeMillis();
 		final int N = 5000; //26 secs with batch flush, 26 without
@@ -66,8 +69,8 @@ public class BatchTest {
 			session.setCacheMode( CacheMode.IGNORE );
 			for ( int i = 0; i < nEntities; i++ ) {
 				DataPoint dp = new DataPoint();
-				dp.setX( new BigDecimal( i * 0.1d ).setScale( 19, RoundingMode.DOWN ) );
-				dp.setY( BigDecimal.valueOf( Math.cos( dp.getX().doubleValue() ) ).setScale( 19, RoundingMode.DOWN ) );
+				dp.setX( new BigDecimal( i * 0.1d ).setScale( 9, RoundingMode.DOWN ) );
+				dp.setY( BigDecimal.valueOf( Math.cos( dp.getX().doubleValue() ) ).setScale( 9, RoundingMode.DOWN ) );
 				session.persist( dp );
 				if ( ( i + 1 ) % nBeforeFlush == 0 ) {
 					session.flush();

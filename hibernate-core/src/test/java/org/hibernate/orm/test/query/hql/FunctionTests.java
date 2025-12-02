@@ -25,6 +25,7 @@ import org.hibernate.dialect.OracleDialect;
 import org.hibernate.dialect.PostgreSQLDialect;
 import org.hibernate.dialect.PostgresPlusDialect;
 import org.hibernate.dialect.SQLServerDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.dialect.SybaseASEDialect;
 import org.hibernate.dialect.SybaseDialect;
 import org.hibernate.community.dialect.TiDBDialect;
@@ -859,6 +860,7 @@ public class FunctionTests {
 
 	@Test
 	@JiraKey( "HHH-17435" )
+	@SkipForDialect( dialectClass = SpannerDialect.class, reason = "Spanner googlesql dialect doesn't support EscapeQuoteWithQuote")
 	public void testTrimFunctionParameters(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -1327,10 +1329,23 @@ public class FunctionTests {
 	}
 
 	@Test
-	public void testStatisticalFunctions(SessionFactoryScope scope) {
+	public void testSampleStatisticalFunctions(SessionFactoryScope scope) {
 		scope.inTransaction(
-				session -> session.createQuery( "select var_samp(e.theDouble), var_pop(abs(e.theDouble)), stddev_samp(e.theDouble), stddev_pop(e.theDouble) from EntityOfBasics e", Object[].class)
-						.list()
+				session -> session.createQuery(
+						"select var_samp(e.theDouble), stddev_samp(e.theDouble) from EntityOfBasics e",
+						Object[].class
+				).list()
+		);
+	}
+
+	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support population variance/stddev functions")
+	public void testPopulationStatisticalFunctions(SessionFactoryScope scope) {
+		scope.inTransaction(
+				session -> session.createQuery(
+						"select var_pop(abs(e.theDouble)), stddev_pop(e.theDouble) from EntityOfBasics e",
+						Object[].class
+				).list()
 		);
 	}
 

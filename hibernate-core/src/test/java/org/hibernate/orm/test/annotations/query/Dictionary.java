@@ -28,12 +28,12 @@ import jakarta.persistence.SqlResultSetMapping;
 		@FieldResult(name = "name", column = "name"),
 		@FieldResult(name = "editor", column = "editor")
 				},
-		discriminatorColumn = "`type`"
+		discriminatorColumn = "dic_type"
 )
 		}
 )
 @NamedNativeQuery(name = "all.dictionaries",
-		query = "select id, name, editor, disc as \"type\" from Dictionary",
+		query = "select id, name, editor, disc as dic_type from Dictionary",
 		resultSetMapping = "dictionary")
 public class Dictionary {
 	private Integer id;

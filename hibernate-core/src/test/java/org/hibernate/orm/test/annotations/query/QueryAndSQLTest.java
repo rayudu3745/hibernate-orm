@@ -341,10 +341,10 @@ public class QueryAndSQLTest {
 		scope.inTransaction(
 				session -> {
 					Query q = session.getNamedQuery( "night.moreRecentThan" );
-					q.setParameter( "date", aMonthAgo, StandardBasicTypes.DATE );
+					q.setParameter( "date", aMonthAgo, StandardBasicTypes.TIMESTAMP );
 					assertEquals( 1, q.list().size() );
 					q = session.getNamedQuery( "night.moreRecentThan" );
-					q.setParameter( "date", inAMonth, StandardBasicTypes.DATE );
+					q.setParameter( "date", inAMonth, StandardBasicTypes.TIMESTAMP );
 					assertEquals( 0, q.list().size() );
 					Statistics stats = scope.getSessionFactory().getStatistics();
 					stats.setStatisticsEnabled( true );

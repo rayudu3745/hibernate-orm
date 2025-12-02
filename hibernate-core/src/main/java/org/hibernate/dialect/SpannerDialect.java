@@ -44,6 +44,8 @@ import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.query.SemanticException;
 import org.hibernate.query.common.TemporalUnit;
 import org.hibernate.query.sqm.IntervalType;
+import org.hibernate.query.sqm.SetOperator;
+import org.hibernate.query.sqm.TrimSpec;
 import org.hibernate.query.sqm.mutation.internal.inline.InlineMutationStrategy;
 import org.hibernate.query.sqm.mutation.spi.SqmMultiTableMutationStrategy;
 import org.hibernate.sql.ast.SqlAstTranslator;
@@ -650,6 +652,15 @@ public class SpannerDialect extends Dialect {
 				.replace("xx", "%z"); //note special case
 	}
 
+	@Override
+	public String trimPattern(TrimSpec specification, boolean isWhitespace) {
+		return switch ( specification ) {
+			case LEADING -> isWhitespace ? "ltrim(?1)" : "ltrim(?1, ?2)";
+			case TRAILING -> isWhitespace ? "rtrim(?1)" : "rtrim(?1, ?2)";
+			default -> isWhitespace ? "trim(?1)" : "trim(?1, ?2)";
+		};
+	}
+
 	/* DDL-related functions */
 
 	@Override
@@ -963,15 +974,15 @@ public class SpannerDialect extends Dialect {
 		return ScrollMode.FORWARD_ONLY;
 	}
 
-//	@Override
-//	public String getSetOperatorSqlString(SetOperator operator) {
-//		return switch ( operator ) {
-//			case UNION -> "union distinct";
-//			case INTERSECT -> "intersect distinct";
-//			case EXCEPT -> "except distinct";
-//			default -> super.getSetOperatorSqlString( operator );
-//		};
-//	}
+	@Override
+	public String getSetOperatorSqlString(SetOperator operator) {
+		return switch ( operator ) {
+			case UNION -> "union distinct";
+			case INTERSECT -> "intersect distinct";
+			case EXCEPT -> "except distinct";
+			default -> super.getSetOperatorSqlString( operator );
+		};
+	}
 
 	/* Type conversion and casting */
 
