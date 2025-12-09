@@ -279,9 +279,9 @@ public abstract class AbstractSqlAstTranslator<T extends JdbcOperation> implemen
 	private final Dialect dialect;
 	private final Set<String> affectedTableNames = new HashSet<>();
 	private CteStatement currentCteStatement;
-	private boolean needsSelectAliases;
+	protected boolean needsSelectAliases;
 	// Column aliases that need to be injected
-	private List<String> columnAliases;
+	protected List<String> columnAliases;
 	private Predicate additionalWherePredicate;
 	// We must reset the queryPartForRowNumbering fields to null if a query part is visited that does not
 	// contribute to the row numbering i.e. if the query part is a sub-query in the where clause.
@@ -2176,22 +2176,28 @@ public abstract class AbstractSqlAstTranslator<T extends JdbcOperation> implemen
 	private void visitCteStatement(CteStatement cte) {
 		appendSql( cte.getCteTable().getTableExpression() );
 
-		appendSql( " (" );
-
-		renderCteColumns( cte );
-
-		appendSql( ") as " );
+		// Conditionally render the column list: WITH name(col1, col2)
+		if ( getDialect().supportsCteColumnAliases() ) {
+			appendSql( " (" );
+			renderCteColumns( cte );
+			appendSql( ") as " );
+		}
+		else {
+			appendSql( " as " );
+		}
 
 		if ( cte.getMaterialization() != CteMaterialization.UNDEFINED ) {
 			renderMaterializationHint( cte.getMaterialization() );
 		}
 
 		final boolean needsParenthesis = !( cte.getCteDefinition() instanceof SelectStatement )
-				|| ( (SelectStatement) cte.getCteDefinition() ).getQueryPart().isRoot();
+										|| ( (SelectStatement) cte.getCteDefinition() ).getQueryPart().isRoot();
 		if ( needsParenthesis ) {
 			appendSql( OPEN_PARENTHESIS );
 		}
+
 		visitCteDefinition( cte );
+
 		if ( needsParenthesis ) {
 			appendSql( CLOSE_PARENTHESIS );
 		}
@@ -2336,9 +2342,43 @@ public abstract class AbstractSqlAstTranslator<T extends JdbcOperation> implemen
 		currentCteStatement = cte;
 		final Limit oldLimit = limit;
 		limit = null;
-		cte.getCteDefinition().accept( this );
-		currentCteStatement = oldCteStatement;
-		limit = oldLimit;
+
+		final boolean forceAliases = !getDialect().supportsCteColumnAliases();
+		final boolean oldNeedsSelectAliases = this.needsSelectAliases;
+		final List<String> oldAliases = this.columnAliases;
+
+		if ( forceAliases ) {
+			this.needsSelectAliases = true;
+			this.columnAliases = new ArrayList<>();
+
+			// Populate alias list from CTE table definition
+			if ( cte.getCteTable().getCteColumns() == null ) {
+				cte.getCteTable().getTableGroupProducer().visitSubParts(
+						modelPart -> modelPart.forEachSelectable(
+								0,
+								(index, mapping) -> this.columnAliases.add( mapping.getSelectionExpression() )
+						),
+						null
+				);
+			}
+			else {
+				for ( CteColumn cteColumn : cte.getCteTable().getCteColumns() ) {
+					this.columnAliases.add( cteColumn.getColumnExpression() );
+				}
+			}
+		}
+
+		try {
+			cte.getCteDefinition().accept( this );
+		}
+		finally {
+			if ( forceAliases ) {
+				this.needsSelectAliases = oldNeedsSelectAliases;
+				this.columnAliases = oldAliases;
+			}
+			currentCteStatement = oldCteStatement;
+			limit = oldLimit;
+		}
 	}
 
 	/**

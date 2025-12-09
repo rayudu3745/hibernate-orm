@@ -6480,6 +6480,14 @@ public abstract class Dialect implements ConversionContext, TypeContributor, Fun
 	}
 
 	/**
+	 * Does the dialect support defining column aliases in the CTE definition?
+	 * e.g. WITH cte(col1, col2) AS ...
+	 */
+	public boolean supportsCteColumnAliases() {
+		return true;
+	}
+
+	/**
 	 * Is this dialect known to support what ANSI-SQL terms "row value
 	 * constructor" syntax; sometimes called tuple syntax with quantified predicates.
 	 * <p>

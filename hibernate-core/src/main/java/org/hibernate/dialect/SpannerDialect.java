@@ -38,16 +38,12 @@ import org.hibernate.mapping.Column;
 import org.hibernate.mapping.ForeignKey;
 import org.hibernate.mapping.Table;
 import org.hibernate.mapping.UniqueKey;
-import org.hibernate.metamodel.mapping.EntityMappingType;
-import org.hibernate.metamodel.spi.RuntimeModelCreationContext;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.query.SemanticException;
 import org.hibernate.query.common.TemporalUnit;
 import org.hibernate.query.sqm.IntervalType;
 import org.hibernate.query.sqm.SetOperator;
 import org.hibernate.query.sqm.TrimSpec;
-import org.hibernate.query.sqm.mutation.internal.inline.InlineMutationStrategy;
-import org.hibernate.query.sqm.mutation.spi.SqmMultiTableMutationStrategy;
 import org.hibernate.sql.ast.SqlAstTranslator;
 import org.hibernate.sql.ast.SqlAstTranslatorFactory;
 import org.hibernate.sql.ast.spi.LockingClauseStrategy;
@@ -815,12 +811,12 @@ public class SpannerDialect extends Dialect {
 				"Cloud Spanner does not support selecting for lock acquisition." );
 	}
 
-	@Override
-	public SqmMultiTableMutationStrategy getFallbackSqmMutationStrategy(
-			EntityMappingType entityDescriptor,
-			RuntimeModelCreationContext runtimeModelCreationContext) {
-		return new InlineMutationStrategy( this );
-	}
+//	@Override
+//	public SqmMultiTableMutationStrategy getFallbackSqmMutationStrategy(
+//			EntityMappingType entityDescriptor,
+//			RuntimeModelCreationContext runtimeModelCreationContext) {
+//		return new InlineMutationStrategy( this );
+//	}
 
 	@Override
 	public String getReadLockString(int timeout) {
@@ -983,6 +979,18 @@ public class SpannerDialect extends Dialect {
 			default -> super.getSetOperatorSqlString( operator );
 		};
 	}
+
+	@Override
+	public boolean supportsWithClauseInSubquery() {
+		return false;
+	}
+
+	@Override
+	public boolean supportsCteColumnAliases() {
+		return false;
+	}
+
+
 
 	/* Type conversion and casting */
 

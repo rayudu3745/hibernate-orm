@@ -20,6 +20,7 @@ import org.hibernate.sql.ast.tree.expression.SqlTuple;
 import org.hibernate.sql.ast.tree.expression.Summarization;
 import org.hibernate.sql.ast.tree.from.DerivedTableReference;
 import org.hibernate.sql.ast.tree.from.NamedTableReference;
+import org.hibernate.sql.ast.tree.from.QueryPartTableReference;
 import org.hibernate.sql.ast.tree.select.QueryPart;
 import org.hibernate.sql.ast.tree.select.QuerySpec;
 import org.hibernate.sql.ast.tree.select.SelectClause;
@@ -150,4 +151,74 @@ public class SpannerSqlAstTranslator<T extends JdbcOperation> extends AbstractSq
 		}
 	}
 
+	@Override
+	protected void renderDerivedTableReferenceIdentificationVariable(DerivedTableReference tableReference) {
+		renderTableReferenceIdentificationVariable( tableReference );
+	}
+
+	@Override
+	public void visitQueryPartTableReference(QueryPartTableReference tableReference) {
+		emulateQueryPartTableReferenceColumnAliasing( tableReference );
+	}
+
+//	@Override
+//	public void visitCteContainer(org.hibernate.sql.ast.tree.cte.CteContainer cteContainer) {
+//		var cteStatements = cteContainer.getCteStatements().values();
+//		if ( cteStatements.isEmpty() ) {
+//			return;
+//		}
+//
+//		getClauseStack().push( Clause.WITH );
+//		appendSql( "with " );
+//
+//		boolean first = true;
+//		for ( var cte : cteStatements ) {
+//			if ( !first ) {
+//				appendSql( ", " );
+//			}
+//
+//			// 1. Render Table Alias
+//			appendSql( cte.getCteTable().getTableExpression() );
+//
+//			// 2. Render AS
+//			appendSql( " as " );
+//
+//			// 3. Render Definition
+//			appendSql( "(" );
+//
+//			// --- FIX START ---
+//			// Save the previous state
+//			final List<String> oldAliases = this.columnAliases;
+//
+//			// Extract expected column names from the CTE table definition
+//			// This forces the inner SELECT to render "AS colName", satisfying Spanner's requirements
+//			List<String> cteColumnNames = new java.util.ArrayList<>();
+//			if (cte.getCteTable().getCteColumns() != null) {
+//				for (org.hibernate.sql.ast.tree.cte.CteColumn col : cte.getCteTable().getCteColumns()) {
+//					cteColumnNames.add(col.getColumnExpression());
+//				}
+//			}
+//			this.columnAliases = cteColumnNames;
+//			boolean currentNeedsSelectAliases = this.needsSelectAliases;
+//			this.needsSelectAliases = true;
+//
+//			try {
+//				// Render the inner query. visitSqlSelections will now see 'currentColumnAliases'
+//				// and append " as aliasName" to the select items.
+//				cte.getCteDefinition().accept( this );
+//			} finally {
+//				// Restore previous state so we don't break outer queries
+//				this.columnAliases = oldAliases;
+//				this.needsSelectAliases = currentNeedsSelectAliases;
+//			}
+//			// --- FIX END ---
+//
+//			appendSql( ")" );
+//
+//			first = false;
+//		}
+//
+//		appendSql( " " );
+//		getClauseStack().pop();
+//	}
 }
