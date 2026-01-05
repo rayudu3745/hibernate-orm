@@ -4,8 +4,6 @@
  */
 package org.hibernate.orm.test.readonly;
 
-import java.math.BigDecimal;
-
 import org.hibernate.CacheMode;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
@@ -13,11 +11,12 @@ import org.hibernate.Transaction;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
-
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.FailureExpected;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
 import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -1085,8 +1084,8 @@ public class ReadOnlyProxyTest extends AbstractReadOnlyTest {
 		Transaction t = s.beginTransaction();
 		DataPoint dp = new DataPoint();
 		dp.setDescription( "original" );
-		dp.setX( new BigDecimal( 0.1d ).setScale( 19, BigDecimal.ROUND_DOWN ) );
-		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 19, BigDecimal.ROUND_DOWN ) );
+		dp.setX( new BigDecimal( 0.1d ).setScale( 9, BigDecimal.ROUND_DOWN ) );
+		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 9, BigDecimal.ROUND_DOWN ) );
 		s.persist( dp );
 		t.commit();
 		s.close();
@@ -1129,8 +1128,8 @@ public class ReadOnlyProxyTest extends AbstractReadOnlyTest {
 		Transaction t = s.beginTransaction();
 		DataPoint dp = new DataPoint();
 		dp.setDescription( "original" );
-		dp.setX( new BigDecimal( 0.1d ).setScale( 19, BigDecimal.ROUND_DOWN ) );
-		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 19, BigDecimal.ROUND_DOWN ) );
+		dp.setX( new BigDecimal( 0.1d ).setScale( 9, BigDecimal.ROUND_DOWN ) );
+		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 9, BigDecimal.ROUND_DOWN ) );
 		s.persist( dp );
 		t.commit();
 		s.close();
@@ -1890,8 +1889,9 @@ public class ReadOnlyProxyTest extends AbstractReadOnlyTest {
 		s.setCacheMode( cacheMode );
 		s.beginTransaction();
 		DataPoint dp = new DataPoint();
-		dp.setX( new BigDecimal( 0.1d ).setScale( 19, BigDecimal.ROUND_DOWN ) );
-		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 19, BigDecimal.ROUND_DOWN ) );
+		dp.setX( new BigDecimal( 0.1d ).setScale( 9, BigDecimal.ROUND_DOWN ).stripTrailingZeros() );
+		dp.setY( new BigDecimal( Math.cos( dp.getX().doubleValue() ) ).setScale( 9, BigDecimal.ROUND_DOWN )
+				.stripTrailingZeros() );
 		dp.setDescription( "original" );
 		s.persist( dp );
 		s.getTransaction().commit();

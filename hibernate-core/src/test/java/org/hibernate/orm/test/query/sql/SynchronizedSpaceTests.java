@@ -17,9 +17,11 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.NamedNativeQuery;
 import org.hibernate.cache.spi.CacheImplementor;
 import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.testing.cache.CachingRegionFactory;
+import org.hibernate.testing.orm.junit.DialectContext;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.ServiceRegistry;
 import org.hibernate.testing.orm.junit.SessionFactory;
@@ -97,7 +99,12 @@ public class SynchronizedSpaceTests {
 		checkUseCase(
 				scope,
 				(session) -> {
-					final Query nativeQuery = session.createNativeQuery( "update " + table + " set name = 'updated'" );
+					// spanner requires a where clause
+					final String whereClause = DialectContext.getDialect() instanceof SpannerDialect
+							? " where true"
+							: "";
+					final Query nativeQuery = session.createNativeQuery(
+							"update " + table + " set name = 'updated'" + whereClause );
 					updateQueryConfigurer.accept( nativeQuery );
 					return nativeQuery;
 				},

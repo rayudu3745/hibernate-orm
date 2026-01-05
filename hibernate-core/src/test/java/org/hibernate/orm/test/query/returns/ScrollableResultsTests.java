@@ -4,16 +4,14 @@
  */
 package org.hibernate.orm.test.query.returns;
 
-import java.util.function.Consumer;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.TupleElement;
-
 import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.dialect.HANADialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.query.Query;
-
 import org.hibernate.testing.orm.domain.gambit.BasicEntity;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.SessionFactory;
@@ -22,6 +20,8 @@ import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -37,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 @DomainModel( annotatedClasses = BasicEntity.class )
 @SessionFactory
+@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support scrollable results")
 public class ScrollableResultsTests {
 
 	@BeforeEach

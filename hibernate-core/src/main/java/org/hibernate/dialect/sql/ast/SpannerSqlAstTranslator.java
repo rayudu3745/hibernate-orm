@@ -4,10 +4,9 @@
  */
 package org.hibernate.dialect.sql.ast;
 
-import java.util.List;
-
 import org.hibernate.Locking;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.query.IllegalQueryOperationException;
 import org.hibernate.query.sqm.ComparisonOperator;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.spi.AbstractSqlAstTranslator;
@@ -20,11 +19,15 @@ import org.hibernate.sql.ast.tree.expression.SqlTuple;
 import org.hibernate.sql.ast.tree.expression.Summarization;
 import org.hibernate.sql.ast.tree.from.DerivedTableReference;
 import org.hibernate.sql.ast.tree.from.NamedTableReference;
+import org.hibernate.sql.ast.tree.predicate.InArrayPredicate;
+import org.hibernate.sql.ast.tree.predicate.LikePredicate;
 import org.hibernate.sql.ast.tree.select.QueryPart;
 import org.hibernate.sql.ast.tree.select.QuerySpec;
 import org.hibernate.sql.ast.tree.select.SelectClause;
 import org.hibernate.sql.ast.tree.update.UpdateStatement;
 import org.hibernate.sql.exec.spi.JdbcOperation;
+
+import java.util.List;
 
 /**
  * A SQL AST translator for Spanner.
@@ -148,6 +151,154 @@ public class SpannerSqlAstTranslator<T extends JdbcOperation> extends AbstractSq
 		if ( getClauseStack().getCurrent() != Clause.INSERT ) {
 			renderTableReferenceIdentificationVariable( tableReference );
 		}
+	}
+
+	@Override
+	public void visitInArrayPredicate(InArrayPredicate inArrayPredicate) {
+		inArrayPredicate.getTestExpression().accept( this );
+		appendSql( " in unnest(" );
+		inArrayPredicate.getArrayParameter().accept( this );
+		appendSql( ')' );
+	}
+
+	@Override
+	public void visitLikePredicate(LikePredicate likePredicate) {
+		if ( likePredicate.isCaseSensitive() ) {
+			likePredicate.getMatchExpression().accept( this );
+			if ( likePredicate.isNegated() ) {
+				appendSql( " not" );
+			}
+			appendSql( " like " );
+			renderLikePredicate( likePredicate );
+		}
+		else {
+			// Spanner does not support ILIKE, so we use the emulation
+			renderCaseInsensitiveLikeEmulation(
+					likePredicate.getMatchExpression(),
+					likePredicate.getPattern(),
+					likePredicate.getEscapeCharacter(),
+					likePredicate.isNegated()
+			);
+		}
+	}
+
+	@Override
+	protected void renderLikePredicate(LikePredicate likePredicate) {
+		if ( likePredicate.getEscapeCharacter() == null ) {
+			super.renderLikePredicate( likePredicate );
+		}
+		else {
+			renderLikePattern( likePredicate.getPattern(), likePredicate.getEscapeCharacter() );
+		}
+	}
+
+	@Override
+	protected void renderCaseInsensitiveLikeEmulation(Expression lhs, Expression rhs, Expression escapeCharacter, boolean negated) {
+		appendSql( getDialect().getLowercaseFunction() );
+		appendSql( OPEN_PARENTHESIS );
+		lhs.accept( this );
+		appendSql( CLOSE_PARENTHESIS );
+
+		if ( negated ) {
+			appendSql( " not" );
+		}
+		appendSql( " like " );
+
+		if ( escapeCharacter == null ) {
+			appendSql( getDialect().getLowercaseFunction() );
+			appendSql( OPEN_PARENTHESIS );
+			rhs.accept( this );
+			appendSql( CLOSE_PARENTHESIS );
+		}
+		else {
+			// For case-insensitive with custom escape, we transform the pattern and then lower-case it.
+			// We do NOT render the 'escape' clause as Spanner doesn't support it.
+			appendSql( getDialect().getLowercaseFunction() );
+			appendSql( OPEN_PARENTHESIS );
+			renderLikePattern( rhs, escapeCharacter );
+			appendSql( CLOSE_PARENTHESIS );
+		}
+	}
+
+	private void renderLikePattern(Expression pattern, Expression escape) {
+		// Resolve escape char from the expression
+		Character escapeChar = null;
+		Object escapeValue = getLiteralValue( escape );
+		if ( escapeValue instanceof Character ) {
+			escapeChar = (Character) escapeValue;
+		}
+		else if ( escapeValue instanceof String ) {
+			String s = (String) escapeValue;
+			if ( !s.isEmpty() ) {
+				escapeChar = s.charAt( 0 );
+			}
+		}
+
+		if ( escapeChar == null ) {
+			throw new IllegalQueryOperationException(
+					"Could not resolve LIKE escape character for Spanner translation" );
+		}
+
+		// If the escape char is already backslash, we can treat it as normal
+		if ( escapeChar == '\\' ) {
+			pattern.accept( this );
+			return;
+		}
+
+		// Resolve the pattern string
+		String patternText = null;
+		Object patternValue = getLiteralValue( pattern );
+		if ( patternValue instanceof String ) {
+			patternText = (String) patternValue;
+		}
+
+		if ( patternText == null ) {
+			throw new IllegalQueryOperationException(
+					"Could not resolve LIKE pattern for Spanner translation with custom escape character" );
+		}
+
+		// Rewrite the pattern: replace custom escape with backslash
+		String converted = convertLikePattern( patternText, escapeChar );
+
+		// Render as string literal using the Dialect's specific escaping rules
+		getDialect().appendLiteral( this, converted );
+	}
+
+	private String convertLikePattern(String pattern, char escape) {
+		StringBuilder sb = new StringBuilder( pattern.length() );
+		for ( int i = 0; i < pattern.length(); i++ ) {
+			char c = pattern.charAt( i );
+			if ( c == '\\' ) {
+				// Existing backslashes must be double-escaped to survive Spanner's parser
+				sb.append( "\\\\" );
+			}
+			else if ( c == escape ) {
+				// If we find the custom escape char, look ahead
+				if ( i + 1 < pattern.length() ) {
+					char next = pattern.charAt( i + 1 );
+					if ( next == '%' || next == '_' ) {
+						// Replace 'escape' + wildcard with '\' + wildcard
+						sb.append( '\\' ).append( next );
+						i++;
+					}
+					else if ( next == escape ) {
+						// Escape the escape char itself
+						sb.append( escape );
+						i++;
+					}
+					else {
+						sb.append( c );
+					}
+				}
+				else {
+					sb.append( c );
+				}
+			}
+			else {
+				sb.append( c );
+			}
+		}
+		return sb.toString();
 	}
 
 }

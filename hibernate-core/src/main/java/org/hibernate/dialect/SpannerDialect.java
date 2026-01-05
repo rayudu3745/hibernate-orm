@@ -12,6 +12,7 @@ import org.hibernate.ScrollMode;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.model.FunctionContributions;
+import org.hibernate.boot.model.TypeContributions;
 import org.hibernate.boot.model.relational.Exportable;
 import org.hibernate.boot.model.relational.Sequence;
 import org.hibernate.boot.model.relational.SqlStringGenerationContext;
@@ -28,7 +29,6 @@ import org.hibernate.dialect.unique.UniqueDelegate;
 import org.hibernate.engine.jdbc.dialect.spi.DialectResolutionInfo;
 import org.hibernate.engine.jdbc.env.spi.IdentifierHelper;
 import org.hibernate.engine.jdbc.env.spi.IdentifierHelperBuilder;
-import org.hibernate.engine.jdbc.env.spi.SchemaNameResolver;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.collections.ArrayHelper;
@@ -40,6 +40,7 @@ import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.query.SemanticException;
 import org.hibernate.query.common.TemporalUnit;
 import org.hibernate.query.sqm.IntervalType;
+import org.hibernate.service.ServiceRegistry;
 import org.hibernate.sql.ast.SqlAstTranslator;
 import org.hibernate.sql.ast.SqlAstTranslatorFactory;
 import org.hibernate.sql.ast.spi.LockingClauseStrategy;
@@ -48,12 +49,33 @@ import org.hibernate.sql.ast.spi.StandardSqlAstTranslatorFactory;
 import org.hibernate.sql.ast.tree.Statement;
 import org.hibernate.sql.ast.tree.select.QuerySpec;
 import org.hibernate.sql.exec.spi.JdbcOperation;
+import org.hibernate.tool.schema.extract.spi.ColumnTypeInformation;
 import org.hibernate.tool.schema.spi.Exporter;
+import org.hibernate.type.SqlTypes;
 import org.hibernate.type.StandardBasicTypes;
+import org.hibernate.type.descriptor.DateTimeUtils;
+import org.hibernate.type.descriptor.ValueBinder;
+import org.hibernate.type.descriptor.WrapperOptions;
+import org.hibernate.type.descriptor.java.JavaType;
+import org.hibernate.type.descriptor.java.PrimitiveByteArrayJavaType;
+import org.hibernate.type.descriptor.jdbc.ArrayJdbcType;
+import org.hibernate.type.descriptor.jdbc.BasicBinder;
+import org.hibernate.type.descriptor.jdbc.JdbcType;
+import org.hibernate.type.descriptor.jdbc.JdbcTypeConstructor;
+import org.hibernate.type.descriptor.jdbc.OffsetDateTimeJdbcType;
+import org.hibernate.type.descriptor.jdbc.TimestampJdbcType;
+import org.hibernate.type.spi.TypeConfiguration;
 
+import java.sql.CallableStatement;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.temporal.TemporalAccessor;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
+import java.util.TimeZone;
+import java.util.UUID;
 
 import static org.hibernate.dialect.SimpleDatabaseVersion.ZERO_VERSION;
 import static org.hibernate.query.sqm.produce.function.StandardFunctionReturnTypeResolvers.useArgType;
@@ -606,6 +628,11 @@ public class SpannerDialect extends Dialect {
 	}
 
 	@Override
+	public String[] getDropSchemaCommand(String schemaName) {
+		return new String[] {"drop schema if exists " + schemaName};
+	}
+
+	@Override
 	public void appendDatetimeFormat(SqlAppender appender, String format) {
 		appender.appendSql( datetimeFormat( format ).result() );
 	}
@@ -649,34 +676,6 @@ public class SpannerDialect extends Dialect {
 
 	/* DDL-related functions */
 
-	@Override
-	public boolean canCreateSchema() {
-		return false;
-	}
-
-	@Override
-	public String[] getCreateSchemaCommand(String schemaName) {
-		throw new UnsupportedOperationException(
-				"No create schema syntax supported by " + getClass().getName() );
-	}
-
-	@Override
-	public String[] getDropSchemaCommand(String schemaName) {
-		throw new UnsupportedOperationException(
-				"No drop schema syntax supported by " + getClass().getName() );
-	}
-
-	@Override
-	public String getCurrentSchemaCommand() {
-		throw new UnsupportedOperationException(
-				"No current schema syntax supported by " + getClass().getName() );
-	}
-
-	@Override
-	public SchemaNameResolver getSchemaNameResolver() {
-		// Spanner does not have a notion of database name schemas, so return "".
-		return (connection, dialect) -> "";
-	}
 
 	@Override
 	public boolean dropConstraints() {
@@ -934,7 +933,217 @@ public class SpannerDialect extends Dialect {
 		return "delete from " + tableName + " where true";
 	}
 
+	@Override
+	public void contributeTypes(TypeContributions typeContributions, ServiceRegistry serviceRegistry) {
+		super.contributeTypes( typeContributions, serviceRegistry );
+		// Register the custom constructor to intercept Array creation
+		typeContributions.getTypeConfiguration().getJdbcTypeRegistry()
+				.addTypeConstructor( new SpannerArrayJdbcTypeConstructor() );
+		// Spanner only supports TIMESTAMP (UTC instant).
+		// We map TIME/TIME_WITH_TIMEZONE to TIMESTAMP in DDL.
+		// We must also force the JdbcType to TIMESTAMP to avoid java.sql.Time
+		// historical timezone issues (e.g. 1970-01-01 epoch normalization).
+		typeContributions.getTypeConfiguration().getJdbcTypeRegistry()
+				.addDescriptor( org.hibernate.type.SqlTypes.TIME, TimestampJdbcType.INSTANCE );
+		typeContributions.getTypeConfiguration().getJdbcTypeRegistry()
+				.addDescriptor( org.hibernate.type.SqlTypes.TIME_WITH_TIMEZONE, TimestampJdbcType.INSTANCE );
+		typeContributions.getTypeConfiguration().getJdbcTypeRegistry()
+				.addDescriptor( SqlTypes.TIMESTAMP_WITH_TIMEZONE, OffsetDateTimeJdbcType.INSTANCE );
+	}
+
+	private static class SpannerArrayJdbcTypeConstructor implements JdbcTypeConstructor {
+		@Override
+		public JdbcType resolveType(TypeConfiguration typeConfiguration, Dialect dialect, JdbcType elementJdbcType, ColumnTypeInformation columnTypeInformation) {
+			return new SpannerArrayJdbcType( elementJdbcType );
+		}
+
+		@Override
+		public int getDefaultSqlTypeCode() {
+			return SqlTypes.ARRAY;
+		}
+	}
+
 	/* Type conversion and casting */
+
+	private static class SpannerArrayJdbcType extends ArrayJdbcType {
+		SpannerArrayJdbcType(JdbcType elementJdbcType) {
+			super( elementJdbcType );
+		}
+
+		@Override
+		public <X> ValueBinder<X> getBinder(JavaType<X> javaType) {
+			return new BasicBinder<>( javaType, this ) {
+				@Override
+				protected void doBind(PreparedStatement st, X value, int index, WrapperOptions options)
+						throws SQLException {
+					Object[] objects = javaType.unwrap( value, Object[].class, options );
+					if ( objects != null ) {
+						// Convert Integer[] -> Long[] because Spanner INT64 requires Long
+						if ( getElementJdbcType().getJdbcTypeCode() == SqlTypes.INTEGER ) {
+							Long[] longs = new Long[objects.length];
+							for ( int i = 0; i < objects.length; i++ ) {
+								longs[i] = objects[i] == null ? null : ((Number) objects[i]).longValue();
+							}
+							objects = longs;
+						}
+						// Convert Float[] -> Double[] because Spanner FLOAT64 requires Double
+						else if ( getElementJdbcType().getJdbcTypeCode() == SqlTypes.FLOAT
+								|| getElementJdbcType().getJdbcTypeCode() == SqlTypes.REAL
+								|| getElementJdbcType().getJdbcTypeCode() == SqlTypes.DECIMAL
+								|| getElementJdbcType().getJdbcTypeCode() == SqlTypes.NUMERIC ) {
+							Double[] doubles = new Double[objects.length];
+							for ( int i = 0; i < objects.length; i++ ) {
+								doubles[i] = objects[i] == null ? null : ((Number) objects[i]).doubleValue();
+							}
+							objects = doubles;
+						}
+					}
+					// --- FIX END ---
+
+					// Explicitly map JDBC types to Spanner-specific type names
+					String typeName = switch ( getElementJdbcType().getJdbcTypeCode() ) {
+						case SqlTypes.INTEGER, SqlTypes.BIGINT, SqlTypes.TINYINT, SqlTypes.SMALLINT -> "INT64";
+						case SqlTypes.FLOAT, SqlTypes.DOUBLE, SqlTypes.REAL, SqlTypes.DECIMAL, SqlTypes.NUMERIC ->
+								"FLOAT64";
+						case SqlTypes.BOOLEAN, SqlTypes.BIT -> "BOOL";
+						case SqlTypes.VARBINARY, SqlTypes.BLOB, SqlTypes.BINARY, SqlTypes.LONG32VARBINARY -> "BYTES";
+						case SqlTypes.DATE -> "DATE";
+						case SqlTypes.TIMESTAMP, SqlTypes.TIMESTAMP_WITH_TIMEZONE -> "TIMESTAMP";
+						default -> "STRING";
+					};
+
+					// Create the array using the correct type name and converted data
+					java.sql.Array jdbcArray = st.getConnection().createArrayOf( typeName, objects );
+					st.setArray( index, jdbcArray );
+				}
+
+				@Override
+				protected void doBind(CallableStatement st, X value, String name, WrapperOptions options)
+						throws SQLException {
+					throw new UnsupportedOperationException( "Binding array to CallableStatement not supported yet" );
+				}
+			};
+		}
+	}
+
+//	@Override
+//	public void appendLiteral(SqlAppender appender, String literal) {
+//		// Spanner GoogleSQL requires escaping of backslashes in string literals
+//		appender.appendSql( '\'' );
+//		for ( int i = 0; i < literal.length(); i++ ) {
+//			char c = literal.charAt( i );
+//			if ( c == '\'' ) {
+//				appender.appendSql( "\\'" );
+//			}
+//			else if ( c == '\\' ) {
+//				appender.appendSql( "\\\\" );
+//			}
+//			else {
+//				appender.appendSql( c );
+//			}
+//		}
+//		appender.appendSql( '\'' );
+//	}
+
+	@Override
+	public void appendDateTimeLiteral(
+			SqlAppender appender,
+			TemporalAccessor temporalAccessor,
+			TemporalType precision,
+			TimeZone jdbcTimeZone) {
+		switch ( precision ) {
+			case DATE:
+				appender.appendSql( "DATE '" );
+				DateTimeUtils.appendAsDate( appender, temporalAccessor );
+				appender.appendSql( "'" );
+				break;
+			case TIME:
+				// Spanner does not support a standalone TIME type, so we map it to a TIMESTAMP on the epoch.
+				// This ensures compatibility while preserving the time component.
+				appender.appendSql( "TIMESTAMP '1970-01-01 " );
+				DateTimeUtils.appendAsTime( appender, temporalAccessor, false, jdbcTimeZone );
+				appender.appendSql( "'" );
+				break;
+			case TIMESTAMP:
+				appender.appendSql( "TIMESTAMP '" );
+				DateTimeUtils.appendAsTimestampWithNanos( appender, temporalAccessor, false, jdbcTimeZone );
+				appender.appendSql( "'" );
+				break;
+			default:
+				throw new IllegalArgumentException( "Unsupported TemporalType: " + precision );
+		}
+	}
+
+	@Override
+	public void appendDateTimeLiteral(
+			SqlAppender appender,
+			Date date,
+			TemporalType precision,
+			TimeZone jdbcTimeZone) {
+		switch ( precision ) {
+			case DATE:
+				appender.appendSql( "DATE '" );
+				DateTimeUtils.appendAsDate( appender, date );
+				appender.appendSql( "'" );
+				break;
+			case TIME:
+				appender.appendSql( "TIMESTAMP '1970-01-01 " );
+				DateTimeUtils.appendAsLocalTime( appender, date );
+				appender.appendSql( "'" );
+				break;
+			case TIMESTAMP:
+				appender.appendSql( "TIMESTAMP '" );
+				DateTimeUtils.appendAsTimestampWithNanos( appender, date, jdbcTimeZone );
+				appender.appendSql( "'" );
+				break;
+			default:
+				throw new IllegalArgumentException( "Unsupported TemporalType: " + precision );
+		}
+	}
+
+	@Override
+	public void appendDateTimeLiteral(
+			SqlAppender appender,
+			Calendar calendar,
+			TemporalType precision,
+			TimeZone jdbcTimeZone) {
+		switch ( precision ) {
+			case DATE:
+				appender.appendSql( "DATE '" );
+				DateTimeUtils.appendAsDate( appender, calendar );
+				appender.appendSql( "'" );
+				break;
+			case TIME:
+				appender.appendSql( "TIMESTAMP '1970-01-01 " );
+				DateTimeUtils.appendAsLocalTime( appender, calendar );
+				appender.appendSql( "'" );
+				break;
+			case TIMESTAMP:
+				appender.appendSql( "TIMESTAMP '" );
+				DateTimeUtils.appendAsTimestampWithMillis( appender, calendar, jdbcTimeZone );
+				appender.appendSql( "'" );
+				break;
+			default:
+				throw new IllegalArgumentException( "Unsupported TemporalType: " + precision );
+		}
+	}
+
+	@Override
+	public void appendBinaryLiteral(SqlAppender appender, byte[] bytes) {
+		// Spanner requires FROM_HEX('...') for binary literals instead of the standard X'...' syntax.
+		appender.appendSql( "FROM_HEX('" );
+		PrimitiveByteArrayJavaType.INSTANCE.appendString( appender, bytes );
+		appender.appendSql( "')" );
+	}
+
+	@Override
+	public void appendUUIDLiteral(SqlAppender appender, UUID literal) {
+		// Render UUIDs as string literals
+		appender.appendSql( "'" );
+		appender.appendSql( literal.toString() );
+		appender.appendSql( "'" );
+	}
+
 
 	/**
 	 * A no-op {@link Exporter} which is responsible for returning empty Create and Drop SQL strings.

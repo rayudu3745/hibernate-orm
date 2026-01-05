@@ -4,14 +4,12 @@
  */
 package org.hibernate.orm.test.query.hql;
 
-import java.util.List;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
-
 import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.Query;
 import org.hibernate.query.criteria.HibernateCriteriaBuilder;
-
 import org.hibernate.testing.orm.domain.StandardDomainModel;
 import org.hibernate.testing.orm.domain.gambit.BasicEntity;
 import org.hibernate.testing.orm.junit.DomainModel;
@@ -19,9 +17,12 @@ import org.hibernate.testing.orm.junit.ServiceRegistry;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
 import org.hibernate.testing.orm.junit.Setting;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -88,6 +89,7 @@ public class ILikeCriteriaTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support escape character")
 	public void testLikeEscape(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -140,6 +142,7 @@ public class ILikeCriteriaTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support escape character")
 	public void testNotLikeEscape(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -192,6 +195,7 @@ public class ILikeCriteriaTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support escape character")
 	public void testIlikeEscape(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -244,6 +248,7 @@ public class ILikeCriteriaTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support escape character")
 	public void testNotIlikeEscape(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {

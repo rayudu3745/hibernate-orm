@@ -4,17 +4,12 @@
  */
 package org.hibernate.orm.test.pagination;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
-
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
-
+import org.hibernate.Session;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
-import org.hibernate.Session;
 import org.hibernate.query.SelectionQuery;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.SessionFactory;
@@ -22,6 +17,10 @@ import org.hibernate.testing.orm.junit.SessionFactoryScope;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -202,10 +201,10 @@ public class PaginationTest {
 					for ( int i = 0; i < NUMBER_OF_TEST_ROWS; i++ ) {
 						DataPoint dataPoint = new DataPoint();
 						dataPoint.setSequence( i );
-						BigDecimal x = new BigDecimal( i * 0.1d ).setScale( 19, RoundingMode.DOWN );
+						BigDecimal x = new BigDecimal( i * 0.1d ).setScale( 9, RoundingMode.DOWN );
 						dataPoint.setX( x );
 						dataPoint.setY( new BigDecimal( Math.cos( x.doubleValue() ) ).setScale(
-								19,
+								9,
 								RoundingMode.DOWN
 						) );
 						dataPoint.setDescription( "Description: " + i % 5 );
