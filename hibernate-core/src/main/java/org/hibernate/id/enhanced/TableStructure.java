@@ -360,7 +360,7 @@ public class TableStructure implements DatabaseStructure {
 			optimizer.reset();
 			final String update =
 					"update " + sqlContext.format( physicalTableName )
-					+ " set " + valueColumnNameText + " = " + initialValue;
+					+ " set " + valueColumnNameText + " = " + initialValue + " where 1=1";
 			return new InitCommand( update );
 		} );
 	}

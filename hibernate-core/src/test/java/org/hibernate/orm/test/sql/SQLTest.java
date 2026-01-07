@@ -10,6 +10,7 @@ import org.hibernate.Session;
 import org.hibernate.dialect.H2Dialect;
 import org.hibernate.dialect.OracleDialect;
 import org.hibernate.dialect.PostgreSQLDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.loader.NonUniqueDiscoveredSqlAliasException;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.query.TupleTransformer;
@@ -28,6 +29,7 @@ import org.hibernate.testing.orm.junit.EntityManagerFactoryScope;
 import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.orm.junit.Jpa;
 import org.hibernate.testing.orm.junit.RequiresDialect;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.hibernate.type.StandardBasicTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -442,6 +444,8 @@ public class SQLTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner throws on ambiguous column exception before Hibernate can check aliases")
 	public void test_sql_jpa_multi_entity_query_example(EntityManagerFactoryScope scope) {
 		assertThrows( NonUniqueDiscoveredSqlAliasException.class, () -> scope.inTransaction( entityManager -> {
 			//tag::sql-jpa-multi-entity-query-example[]
@@ -456,6 +460,8 @@ public class SQLTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner throws on ambiguous column exception before Hibernate can check aliases")
 	public void test_sql_hibernate_multi_entity_query_example(EntityManagerFactoryScope scope) {
 		try {
 			scope.inTransaction( entityManager -> {
@@ -498,6 +504,8 @@ public class SQLTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner does not support double-quoted aliases (treats them as string literals)")
 	public void test_sql_hibernate_dto_query_example(EntityManagerFactoryScope scope) {
 		scope.inTransaction( entityManager -> {
 			Session session = entityManager.unwrap( Session.class );
@@ -520,6 +528,8 @@ public class SQLTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner driver throws on ambiguous column labels (id)")
 	public void test_sql_hibernate_inheritance_query_example(EntityManagerFactoryScope scope) {
 		scope.inTransaction( entityManager -> {
 			Session session = entityManager.unwrap( Session.class );
@@ -672,6 +682,8 @@ public class SQLTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner does not support double-quoted aliases (treats them as string literals)")
 	public void test_sql_jpa_entity_named_query_example(EntityManagerFactoryScope scope) {
 		scope.inTransaction( entityManager -> {
 			//tag::sql-jpa-entity-named-query-example[]
@@ -688,6 +700,8 @@ public class SQLTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner does not support double-quoted aliases (treats them as string literals)")
 	public void test_sql_hibernate_entity_named_query_example(EntityManagerFactoryScope scope) {
 		scope.inTransaction( entityManager -> {
 			Session session = entityManager.unwrap( Session.class );
@@ -746,6 +760,8 @@ public class SQLTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner does not support double-quoted aliases (treats them as string literals)")
 	public void test_sql_jpa_composite_key_entity_associations_named_query_example(EntityManagerFactoryScope scope) {
 		scope.inTransaction( entityManager -> {
 			//tag::sql-jpa-composite-key-entity-associations_named-query-example[]
@@ -769,6 +785,8 @@ public class SQLTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner does not support double-quoted aliases (treats them as string literals)")
 	public void test_sql_hibernate_composite_key_entity_associations_named_query_example(EntityManagerFactoryScope scope) {
 		scope.inTransaction( entityManager -> {
 			Session session = entityManager.unwrap( Session.class );

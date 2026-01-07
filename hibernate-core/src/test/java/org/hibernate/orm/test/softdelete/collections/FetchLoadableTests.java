@@ -61,9 +61,9 @@ public class FetchLoadableTests {
 	void dropTestData(SessionFactoryScope scope) {
 		scope.inTransaction( (session) -> session.doWork( (connection) -> {
 			final Statement statement = connection.createStatement();
-			statement.execute( "delete from batch_loadables" );
-			statement.execute( "delete from subselect_loadables" );
-			statement.execute( "delete from coll_owner2" );
+			statement.execute( "delete from batch_loadables where 1=1" );
+			statement.execute( "delete from subselect_loadables where 1=1" );
+			statement.execute( "delete from coll_owner2 where 1=1" );
 		} ) );
 	}
 

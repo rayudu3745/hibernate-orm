@@ -12,10 +12,12 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.criteria.Root;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.Jira;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -131,6 +133,7 @@ public abstract class AbstractMutationStrategyIdTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "row_number window function not supported")
 	public void testInsertSelect(SessionFactoryScope scope) {
 		scope.inTransaction( session -> {
 			final int insertCount = session.createQuery( "insert into Engineer(id, name, employed, fellow) "

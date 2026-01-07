@@ -6,6 +6,7 @@ package org.hibernate.orm.test.query.hql;
 
 import org.hibernate.community.dialect.DerbyDialect;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.jdbc.SQLStatementInspector;
 import org.hibernate.testing.orm.junit.DomainModel;
@@ -67,6 +68,7 @@ public class InsertSelectTests {
 	@JiraKey( value = "HHH-15531")
 	@SkipForDialect(dialectClass = DerbyDialect.class, reason = "Derby doesn't really support window functions, " +
 			"but this requires the use of a dense_rank window function. We could emulate this, but don't think it's worth it")
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner doesn't support row_number window function")
 	public void testInsertSelectDistinct(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -83,6 +85,7 @@ public class InsertSelectTests {
 	@JiraKey( value = "HHH-15531")
 	@SkipForDialect(dialectClass = DerbyDialect.class, reason = "Derby doesn't really support window functions and " +
 			"its attempt at a row_number function fails to deliver the desired semantics")
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner doesn't support row_number window function")
 	public void testInsertSelectGroupBy(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {

@@ -4,9 +4,11 @@
  */
 package org.hibernate.orm.test.annotations.cascade.multicircle.nonjpa.sequence;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,6 +75,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 		}
 )
 @SessionFactory
+@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support char(36) type")
 public class MultiCircleNonJpaCascadeSequenceTest {
 	private B b;
 	private C c;

@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.Set;
 
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.EntityManagerFactoryScope;
 import org.hibernate.testing.orm.junit.Jpa;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -79,6 +81,7 @@ public class CriteriaGetParametersTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "escape clause not supported by spanner")
 	public void likeExpStringExpTest(EntityManagerFactoryScope scope) {
 		scope.inEntityManager(
 				entityManager -> {

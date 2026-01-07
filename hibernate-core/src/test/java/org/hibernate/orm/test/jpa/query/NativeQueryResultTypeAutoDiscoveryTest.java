@@ -30,6 +30,7 @@ import org.hibernate.dialect.MySQLDialect;
 import org.hibernate.dialect.OracleDialect;
 import org.hibernate.dialect.PostgreSQLDialect;
 import org.hibernate.dialect.PostgresPlusDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.dialect.SybaseDialect;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.testing.orm.junit.EntityManagerFactoryScope;
@@ -115,11 +116,13 @@ public class NativeQueryResultTypeAutoDiscoveryTest {
 
 	@Test
 	@SkipForDialect(dialectClass = OracleDialect.class, reason = "Oracle maps integer types to number")
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner maps smallint to int64")
 	public void smallintType(EntityManagerFactoryScope scope) {
 		doTest( scope, SmallintEntity.class, (short)32767 );
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner maps integers to int64")
 	public void integerTypes(EntityManagerFactoryScope scope) {
 		doTest( scope, BigintEntity.class, 9223372036854775807L );
 		doTest( scope, IntegerEntity.class, 2147483647 );
@@ -161,6 +164,7 @@ public class NativeQueryResultTypeAutoDiscoveryTest {
 	@SkipForDialect(dialectClass = AltibaseDialect.class, reason = "Altibase maps tinyint to smallint")
 	@SkipForDialect(dialectClass = InformixDialect.class, reason = "informix maps tinyint to smallint")
 	@SkipForDialect(dialectClass = GaussDBDialect.class, reason = "type:resolved.Turns tinyints into shorts in result sets and advertises the type as short in the metadata")
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "tinyint maps to int64")
 	public void tinyintType(EntityManagerFactoryScope scope) {
 		doTest( scope, TinyintEntity.class, (byte)127 );
 	}
@@ -169,6 +173,8 @@ public class NativeQueryResultTypeAutoDiscoveryTest {
 	@SkipForDialect(dialectClass = H2Dialect.class, reason = "Turns floats into doubles in result sets and advertises the type as double in the metadata")
 	@SkipForDialect(dialectClass = HSQLDialect.class, reason = "Turns floats into doubles in result sets and advertises the type as double in the metadata")
 	@SkipForDialect(dialectClass = AltibaseDialect.class, reason = "Turns floats into doubles in result sets and advertises the type as double in the metadata")
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Turns floats into doubles in result sets and advertises the type as double in the metadata")
 	public void floatType(EntityManagerFactoryScope scope) {
 		doTest( scope, FloatEntity.class, 15516.125f );
 	}
@@ -191,6 +197,8 @@ public class NativeQueryResultTypeAutoDiscoveryTest {
 	@SkipForDialect(dialectClass = FirebirdDialect.class, reason = "Value is too big for the maximum allowed precision of Firebird")
 	@SkipForDialect(dialectClass = AltibaseDialect.class, reason = "Value is too big for the maximum allowed precision of Altibase")
 	@SkipForDialect(dialectClass = InformixDialect.class, reason = "The scale exceeds the maximum precision specified")
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Max scale for a numeric is 9. The requested numeric has scale 17")
 	public void numericType(EntityManagerFactoryScope scope) {
 		doTest( scope, NumericEntity.class, new BigDecimal( "5464384284258458485484848458.48465843584584684" ) );
 	}
@@ -204,6 +212,8 @@ public class NativeQueryResultTypeAutoDiscoveryTest {
 	@SkipForDialect(dialectClass = FirebirdDialect.class, reason = "Value is too big for the maximum allowed precision of Firebird")
 	@SkipForDialect(dialectClass = AltibaseDialect.class, reason = "Value is too big for the maximum allowed precision of Altibase")
 	@SkipForDialect(dialectClass = InformixDialect.class, reason = "The scale exceeds the maximum precision specified")
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Max scale for a numeric is 9. The requested numeric has scale 17")
 	public void decimalType(EntityManagerFactoryScope scope) {
 		doTest( scope, DecimalEntity.class, new BigDecimal( "5464384284258458485484848458.48465843584584684" )  );
 	}
@@ -225,6 +235,7 @@ public class NativeQueryResultTypeAutoDiscoveryTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "maps char to string")
 	public void charType(EntityManagerFactoryScope scope) {
 		doTest( scope, CharEntity.class, 'c' );
 	}
@@ -276,6 +287,7 @@ public class NativeQueryResultTypeAutoDiscoveryTest {
 	@SkipForDialect(dialectClass = SybaseDialect.class, reason = "Sybase maps DATE and TIME to TIMESTAMP", matchSubTypes = true)
 	@SkipForDialect(dialectClass = AltibaseDialect.class, reason = "Altibase maps DATE and TIME to TIMESTAMP")
 	@SkipForDialect(dialectClass = GaussDBDialect.class, reason = "type:resolved.GaussDB's Oracle model maps DATE and TIME to TIMESTAMP")
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner maps TIME to TIMESTAMP")
 	public void dateTimeTypes(EntityManagerFactoryScope scope) {
 		ZonedDateTime zonedDateTime = ZonedDateTime.of(
 				2014, Month.NOVEMBER.getValue(), 15,

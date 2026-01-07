@@ -9,9 +9,11 @@ import java.util.List;
 
 import org.hibernate.cfg.AvailableSettings;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.EntityManagerFactoryScope;
 import org.hibernate.testing.orm.junit.Jpa;
 import org.hibernate.testing.orm.junit.Setting;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,6 +79,10 @@ public class NamedQueryTest {
 	}
 
 	@Test
+	@SkipForDialect(
+			dialectClass = SpannerDialect.class,
+			reason = "Spanner only supports INT64 which maps to java.lang.Long, causing a type mismatch in scalar native queries where the test expects java.lang.Integer"
+	)
 	public void testNativeWithMaxResults(EntityManagerFactoryScope scope) {
 		scope.inTransaction(
 				entityManager -> {

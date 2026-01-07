@@ -19,12 +19,14 @@ import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.Table;
 
 import org.hibernate.HibernateException;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.NativeQuery;
 
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,6 +65,7 @@ public class QueryTest {
 
 	@Test
 	@JiraKey( "HHH-13082" )
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner maps int to int64")
 	public void testNativeQueryResult(SessionFactoryScope scope) {
 		scope.inTransaction( session -> {
 			final NativeQuery<Object[]> query = session.createNativeQuery( "select id, salary from EMP", "emp_id_salary", Object[].class );
@@ -77,6 +80,7 @@ public class QueryTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner maps int to int64")
 	public void testNativeQueryResultWithResultClass(SessionFactoryScope scope) {
 		scope.inTransaction( session -> {
 			final NativeQuery<Object[]> query = session.createNativeQuery( "select id, salary from EMP", "emp_id_salary", Object[].class );
@@ -92,6 +96,7 @@ public class QueryTest {
 
 	@Test
 	@JiraKey( "HHH-14975" )
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner maps int to int64")
 	public void testAutoAppliedConverterAsNativeQueryResult(SessionFactoryScope scope) {
 		scope.inTransaction( (session) -> {
 			final NativeQuery<Object[]> query = session.createNativeQuery( "select id, salary from EMP", "emp_id_salary2", Object[].class );

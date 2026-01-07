@@ -11,6 +11,7 @@ import jakarta.persistence.Version;
 import org.hibernate.annotations.OptimisticLock;
 import org.hibernate.dialect.CockroachDialect;
 import org.hibernate.dialect.MariaDBDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.EntityManagerFactoryScope;
 import org.hibernate.testing.orm.junit.Jpa;
 import org.hibernate.testing.orm.junit.SkipForDialect;
@@ -24,6 +25,8 @@ import org.junit.jupiter.api.Test;
  */
 @SuppressWarnings("JUnitMalformedDeclaration")
 @Jpa(annotatedClasses = OptimisticLockTest.Phone.class)
+@SkipForDialect(dialectClass = SpannerDialect.class,
+		reason = "Spanner emulator only supports one transaction at a time ")
 public class OptimisticLockTest {
 	private static final Logger log = Logger.getLogger( OptimisticLockTest.class );
 

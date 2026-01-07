@@ -122,6 +122,8 @@ public class FormulaTests {
 				override = @Formula("cast(rate * 100 as decimal(10,2)) || '%'"))
 		@DialectOverride.Formula(dialect = InformixDialect.class,
 				override = @Formula("trim(concat(to_char(rate * 100,'#&.&&'), '%'))"))
+		@DialectOverride.Formula(dialect = org.hibernate.dialect.SpannerDialect.class,
+				override = @Formula("cast(rate * 100 as string) || '%'"))
 		private String ratePercent;
 
 		public Long getId() {

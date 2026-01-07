@@ -6,10 +6,12 @@ package org.hibernate.orm.test.query.hql;
 
 import java.io.Serializable;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.Jira;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @DomainModel(annotatedClasses = EscapeConvertedCharArrayTest.Vehicle.class)
 @SessionFactory
 @Jira("https://hibernate.atlassian.net/browse/HHH-16211")
+@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support LIKE with escape")
 public class EscapeConvertedCharArrayTest {
 	private static final String STRING_PROP = "TEST123456";
 

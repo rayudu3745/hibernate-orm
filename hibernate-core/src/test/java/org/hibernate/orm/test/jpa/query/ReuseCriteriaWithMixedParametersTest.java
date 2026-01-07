@@ -8,12 +8,14 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.orm.test.jpa.Wallet;
 import org.hibernate.orm.test.jpa.Wallet_;
 
 import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.orm.junit.EntityManagerFactoryScope;
 import org.hibernate.testing.orm.junit.Jpa;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -75,6 +77,7 @@ public class ReuseCriteriaWithMixedParametersTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support escape clause with like")
 	public void likeCqReuse(EntityManagerFactoryScope scope) {
 		scope.inTransaction( entityManager -> {
 
@@ -147,6 +150,7 @@ public class ReuseCriteriaWithMixedParametersTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support escape clause with like")
 	public void testLikePredicate(EntityManagerFactoryScope scope) {
 		scope.inTransaction(
 				entityManager -> {

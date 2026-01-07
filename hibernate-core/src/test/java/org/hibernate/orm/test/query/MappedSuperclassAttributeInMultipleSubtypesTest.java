@@ -6,6 +6,7 @@ package org.hibernate.orm.test.query;
 
 import java.util.List;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.PathException;
 
 import org.hibernate.testing.orm.domain.gambit.BasicEntity;
@@ -13,6 +14,7 @@ import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.Jira;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -37,6 +39,10 @@ import static org.assertj.core.api.Assertions.fail;
 } )
 @SessionFactory
 @Jira( "https://hibernate.atlassian.net/browse/HHH-17491" )
+@SkipForDialect(
+		dialectClass = SpannerDialect.class,
+		reason = "Spanner does not support implicit casting from FLOAT64 to INT64 for shared columns (Integer/Double) in Single Table Inheritance"
+)
 public class MappedSuperclassAttributeInMultipleSubtypesTest {
 	@BeforeAll
 	public void setUp(SessionFactoryScope scope) {

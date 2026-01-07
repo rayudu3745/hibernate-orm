@@ -16,6 +16,7 @@ import jakarta.persistence.criteria.Root;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.community.dialect.AltibaseDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.jdbc.AbstractWork;
 
 import org.hibernate.testing.orm.junit.DomainModel;
@@ -40,6 +41,8 @@ public class JoinTest {
 
 	@Test
 	@SkipForDialect( dialectClass = AltibaseDialect.class, reason = "In line view in left join is not possible in Altibase")
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner has issues resolving columns in the SET clause if the column name matches the table name")
 	public void testSequentialSelects(SessionFactoryScope scope) {
 		scope.inTransaction(
 				s -> {
@@ -147,7 +150,7 @@ public class JoinTest {
 				new AbstractWork() {
 					@Override
 					public void execute(Connection connection) throws SQLException {
-						try (PreparedStatement ps = connection.prepareStatement( "delete from t_user" )) {
+						try (PreparedStatement ps = connection.prepareStatement( "delete from t_user where 1=1" )) {
 							ps.execute();
 						}
 					}

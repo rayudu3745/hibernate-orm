@@ -10,9 +10,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.SequenceGenerator;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,6 +79,7 @@ public abstract class AbstractMutationStrategyGeneratedIdWithOptimizerTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Analytic functions not supported")
 	public void testInsertSelectStatic(SessionFactoryScope scope) {
 		scope.inTransaction( session -> {
 			final int insertCount = session.createMutationQuery( "insert into Engineer(id, name, employed, fellow) "
@@ -93,6 +96,7 @@ public abstract class AbstractMutationStrategyGeneratedIdWithOptimizerTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Analytic functions not supported")
 	public void testInsertSelectGenerated(SessionFactoryScope scope) {
 		scope.inTransaction( session -> {
 			final int insertCount = session.createMutationQuery( "insert into Engineer(name, employed, fellow) "

@@ -4,6 +4,7 @@
  */
 package org.hibernate.orm.test.query.criteria;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.sqm.internal.SqmCriteriaNodeBuilder;
 import org.hibernate.query.sqm.tree.from.SqmRoot;
 import org.hibernate.query.sqm.tree.insert.SqmInsertSelectStatement;
@@ -12,6 +13,7 @@ import org.hibernate.query.sqm.tree.select.SqmSelectStatement;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.Test;
 
 import jakarta.persistence.Basic;
@@ -28,6 +30,7 @@ import jakarta.persistence.Tuple;
 @SessionFactory
 public class InsertSelectTests {
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support row_number window function")
 	public void simpleTest(SessionFactoryScope scope) {
 		scope.inTransaction( (session) -> {
 			session.persist( new AnEntity( "test" ) );

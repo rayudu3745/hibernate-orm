@@ -6,9 +6,11 @@ package org.hibernate.orm.test.query.resultmapping;
 
 import java.util.List;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.named.NamedResultSetMappingMemento;
 
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -21,6 +23,10 @@ import static org.hamcrest.Matchers.notNullValue;
 public class InstantiationResultTests extends AbstractUsageTest {
 
 	@Test
+	@SkipForDialect(
+			dialectClass = SpannerDialect.class,
+			reason = "Spanner stores INTEGER as INT64 (Long). The native query returns a Long, but the DTO expects an Integer, causing a reflection error during instantiation."
+	)
 	public void testSimpleInstantiationOfScalars(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {

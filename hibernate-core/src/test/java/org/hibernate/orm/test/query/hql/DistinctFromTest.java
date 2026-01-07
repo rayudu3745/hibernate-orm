@@ -4,6 +4,7 @@
  */
 package org.hibernate.orm.test.query.hql;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.dialect.SybaseDialect;
 
 import org.hibernate.testing.orm.domain.StandardDomainModel;
@@ -115,6 +116,8 @@ public class DistinctFromTest {
 		);
 	}
 
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Query without FROM clause cannot have a WHERE clause")
 	@Test void testNulls(SessionFactoryScope scope) {
 		scope.inSession(session -> {
 			assertEquals(1, session.createSelectionQuery("select 1 where 1 is distinct from 0").getResultList().size());

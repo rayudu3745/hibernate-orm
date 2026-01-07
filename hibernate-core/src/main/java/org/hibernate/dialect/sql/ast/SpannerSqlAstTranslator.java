@@ -8,12 +8,17 @@ import java.util.List;
 
 import org.hibernate.Locking;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.query.IllegalQueryOperationException;
 import org.hibernate.query.sqm.ComparisonOperator;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.spi.AbstractSqlAstTranslator;
 import org.hibernate.sql.ast.spi.SqlSelection;
 import org.hibernate.sql.ast.tree.Statement;
 import org.hibernate.sql.ast.tree.delete.DeleteStatement;
+import org.hibernate.sql.ast.tree.expression.Any;
+import org.hibernate.sql.ast.tree.expression.BinaryArithmeticExpression;
+import org.hibernate.sql.ast.tree.expression.ColumnReference;
+import org.hibernate.sql.ast.tree.expression.Every;
 import org.hibernate.sql.ast.tree.expression.Expression;
 import org.hibernate.sql.ast.tree.expression.Literal;
 import org.hibernate.sql.ast.tree.expression.SqlTuple;
@@ -24,6 +29,8 @@ import org.hibernate.sql.ast.tree.from.QueryPartTableReference;
 import org.hibernate.sql.ast.tree.from.TableReference;
 import org.hibernate.sql.ast.tree.predicate.InArrayPredicate;
 import org.hibernate.sql.ast.tree.predicate.LikePredicate;
+import org.hibernate.sql.ast.tree.insert.ConflictClause;
+import org.hibernate.sql.ast.tree.insert.InsertSelectStatement;
 import org.hibernate.sql.ast.tree.select.QueryPart;
 import org.hibernate.sql.ast.tree.select.QuerySpec;
 import org.hibernate.sql.ast.tree.select.SelectClause;
@@ -58,7 +65,21 @@ public class SpannerSqlAstTranslator<T extends JdbcOperation> extends AbstractSq
 
 	@Override
 	protected void renderComparison(Expression lhs, ComparisonOperator operator, Expression rhs) {
-		renderComparisonEmulateIntersect( lhs, operator, rhs );
+		if ( rhs instanceof Any && operator == ComparisonOperator.EQUAL ) {
+			// Map "= ANY(subquery)" to "IN (subquery)"
+			lhs.accept( this );
+			appendSql( " in " );
+			((Any) rhs).getSubquery().accept( this );
+		}
+		else if ( rhs instanceof Every && operator == ComparisonOperator.NOT_EQUAL ) {
+			// ALL(subquery)" to "NOT IN (subquery)"
+			lhs.accept( this );
+			appendSql( " not in " );
+			((Every) rhs).getSubquery().accept( this );
+		}
+		else {
+			renderComparisonEmulateIntersect( lhs, operator, rhs );
+		}
 	}
 
 	@Override
@@ -194,5 +215,89 @@ public class SpannerSqlAstTranslator<T extends JdbcOperation> extends AbstractSq
 		}
 		super.visitLikePredicate( likePredicate );
 	}
+
+	protected void visitConflictClause(ConflictClause conflictClause) {
+		if ( conflictClause == null ) {
+			return;
+		}
+		if ( conflictClause.getConstraintName() != null ) {
+			throw new IllegalQueryOperationException(
+					"Cloud Spanner does not support named constraints in conflict clauses." );
+		}
+		if ( !conflictClause.getConstraintColumnNames().isEmpty() ) {
+			throw new IllegalQueryOperationException(
+					"Cloud Spanner does not support specifying constraint columns in conflict clauses." );
+		}
+		if ( conflictClause.getPredicate() != null && !conflictClause.getPredicate().isEmpty() ) {
+			throw new IllegalQueryOperationException(
+					"Cloud Spanner does not support predicates (WHERE clause) in conflict clauses." );
+		}
+		// No-op for rendering: Spanner handles conflict via the INSERT OR UPDATE/IGNORE syntax
+	}
+
+	@Override
+	protected void visitInsertStatementOnly(InsertSelectStatement statement) {
+		final ConflictClause conflictClause = statement.getConflictClause();
+		if ( conflictClause == null ) {
+			super.visitInsertStatementOnly( statement );
+			return;
+		}
+		visitConflictClause( conflictClause );
+		getClauseStack().push( Clause.INSERT );
+		if ( conflictClause.isDoUpdate() ) {
+			appendSql( "insert or update into " );
+		}
+		else {
+			appendSql( "insert or ignore into " );
+		}
+		renderDmlTargetTableExpression( statement.getTargetTable() );
+		appendSql( OPEN_PARENTHESIS );
+		boolean firstPass = true;
+		final List<ColumnReference> targetColumnReferences = statement.getTargetColumns();
+		for ( ColumnReference targetColumnReference : targetColumnReferences ) {
+			if ( firstPass ) {
+				firstPass = false;
+			}
+			else {
+				appendSql( COMMA_SEPARATOR_CHAR );
+			}
+			appendSql( targetColumnReference.getColumnExpression() );
+		}
+		appendSql( ") " );
+		getClauseStack().pop();
+		visitInsertSource( statement );
+		visitReturningColumns( statement.getReturningColumns() );
+	}
+
+	@Override
+	public void visitBinaryArithmeticExpression(BinaryArithmeticExpression arithmeticExpression) {
+		if ( isIntegerDivisionEmulationRequired( arithmeticExpression ) ) {
+			// Spanner uses functional syntax: DIV(numerator, denominator)
+			appendSql( "div(" );
+			visitArithmeticOperand( arithmeticExpression.getLeftHandOperand() );
+			appendSql( "," );
+			visitArithmeticOperand( arithmeticExpression.getRightHandOperand() );
+			appendSql( ")" );
+		}
+		else {
+			super.visitBinaryArithmeticExpression( arithmeticExpression );
+		}
+	}
+
+//	@Override
+//	protected void visitReturningColumns(List<ColumnReference> returningColumns) {
+//		if ( !returningColumns.isEmpty() ) {
+//			appendSql( " then return " ); // Spanner specific syntax
+//			boolean first = true;
+//			for ( ColumnReference column : returningColumns ) {
+//				if ( !first ) {
+//					appendSql( ", " );
+//				}
+//				// Spanner requires simple column names in RETURNING, usually without table alias
+//				column.accept( this );
+//				first = false;
+//			}
+//		}
+//	}
 
 }

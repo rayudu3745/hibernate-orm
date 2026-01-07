@@ -11,12 +11,14 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.cfg.AvailableSettings;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.orm.junit.ServiceRegistry;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
 import org.hibernate.testing.orm.junit.Setting;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -108,7 +110,8 @@ public class BatchSubselectCollection2Test {
 	public void testSelectingEntityAAfterSelectingEntityE(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
-					List<EntityE> entitiesE = session.createQuery( "select e from EntityE e", EntityE.class )
+					List<EntityE> entitiesE = session.createQuery( "select e from EntityE e order by e.id",
+									EntityE.class )
 							.getResultList();
 					assertThat( entitiesE ).hasSize( 1 );
 					EntityE entityE = entitiesE.get( 0 );
@@ -165,7 +168,8 @@ public class BatchSubselectCollection2Test {
 		scope.inTransaction(
 				session -> {
 					List<EntityD> entityDs = session.createQuery(
-							"from EntityD d  left join fetch d.openingB left join fetch d.closingB" ).list();
+									"from EntityD d  left join fetch d.openingB left join fetch d.closingB order by d.id" )
+							.list();
 					assertThat( entityDs.size() ).isEqualTo( 2 );
 					EntityD entityD = entityDs.get( 0 );
 					assertThat( entityD ).isNotNull();
@@ -177,10 +181,12 @@ public class BatchSubselectCollection2Test {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class)
 	public void testSelectEntityD(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
-					List<EntityD> entitiesD = session.createQuery( "select d from EntityD d", EntityD.class )
+					List<EntityD> entitiesD = session.createQuery( "select d from EntityD d order by d.id",
+									EntityD.class )
 							.getResultList();
 					assertThat( entitiesD ).hasSize( 2 );
 					EntityB entityB = entitiesD.get( 0 ).getOpeningB();

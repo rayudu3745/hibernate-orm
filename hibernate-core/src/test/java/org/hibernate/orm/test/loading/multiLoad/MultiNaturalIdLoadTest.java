@@ -75,27 +75,23 @@ class MultiNaturalIdLoadTest {
 		scope.inTransaction(
 				session -> {
 					statementInspector.getSqlQueries().clear();
-
 					List<SimpleNaturalIdEntity> results = session
 							.byMultipleNaturalId( SimpleNaturalIdEntity.class )
 							.enableOrderedReturn( false )
 							.multiLoad( "Entity1","Entity2","Entity3","Entity4","Entity5" );
 					assertEquals( 5, results.size() );
-
-					Iterator<SimpleNaturalIdEntity> it = results.iterator();
-					for ( int i = 1; i <= 5; i++ ) {
-						SimpleNaturalIdEntity se= it.next();
-						if ( i == se.getId() ) {
-							it.remove();
+					java.util.Set<Integer> expectedIds = new java.util.HashSet<>( List.of( 1, 2, 3, 4, 5 ) );
+					for ( SimpleNaturalIdEntity entity : results ) {
+						if ( expectedIds.contains( entity.getId() ) ) {
+							expectedIds.remove( entity.getId() );
 						}
 					}
-					assertEquals( 0, results.size() );
-
+					assertEquals( 0, expectedIds.size(),
+							"Not all expected IDs were returned or unexpected IDs were found" );
 					final int paramCount = StringHelper.countUnquoted(
 							statementInspector.getSqlQueries().get( 0 ),
 							'?'
 					);
-
 					final Dialect dialect = session.getSessionFactory()
 							.getJdbcServices()
 							.getDialect();

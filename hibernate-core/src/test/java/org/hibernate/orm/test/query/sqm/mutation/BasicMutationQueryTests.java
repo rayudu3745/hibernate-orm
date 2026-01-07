@@ -4,6 +4,7 @@
  */
 package org.hibernate.orm.test.query.sqm.mutation;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.IllegalMutationQueryException;
 
 import org.hibernate.testing.orm.domain.StandardDomainModel;
@@ -11,6 +12,7 @@ import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.ExpectedException;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.Test;
 
 import jakarta.persistence.Basic;
@@ -34,6 +36,7 @@ public class BasicMutationQueryTests {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support delete without where")
 	void basicNativeDeleteTest(SessionFactoryScope scope) {
 		scope.inTransaction( (session) -> {
 			session.createNativeMutationQuery( "delete from contacts" ).executeUpdate();
@@ -48,6 +51,7 @@ public class BasicMutationQueryTests {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support delete without where")
 	void basicNamedNativeDeleteTest(SessionFactoryScope scope) {
 		scope.inTransaction( (session) -> {
 			session.createNamedMutationQuery( "valid-native" ).executeUpdate();

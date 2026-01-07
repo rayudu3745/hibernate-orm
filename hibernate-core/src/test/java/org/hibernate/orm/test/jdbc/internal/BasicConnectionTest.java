@@ -7,6 +7,7 @@ package org.hibernate.orm.test.jdbc.internal;
 import org.hibernate.JDBCException;
 import org.hibernate.Transaction;
 import org.hibernate.community.dialect.DerbyDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.engine.jdbc.spi.JdbcCoordinator;
 import org.hibernate.resource.jdbc.ResourceRegistry;
 import org.hibernate.testing.orm.junit.SessionFactory;
@@ -44,6 +45,8 @@ public class BasicConnectionTest {
 	@Test
 	@SkipForDialect(dialectClass = DerbyDialect.class,
 			reason = "Derby can't drop tables that are still referred to from open ResultSets")
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner doesn't support varchar type, it uses string")
 	public void testBasicJdbcUsage(SessionFactoryScope factoryScope) throws JDBCException {
 		factoryScope.inSession( (session) -> {
 			var jdbcCoordinator = session.getJdbcCoordinator();

@@ -6,10 +6,12 @@ package org.hibernate.orm.test.where.hbm;
 
 import org.hibernate.Hibernate;
 import org.hibernate.dialect.Dialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SuppressWarnings("JUnitMalformedDeclaration")
 @DomainModel(xmlMappings = "hbm/where/LazyManyToManyNonUniqueIdNotFoundWhereTest.hbm.xml")
 @SessionFactory
+@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not varchar syntax for type declaration")
 public class LazyManyToManyNonUniqueIdNotFoundWhereTest {
 	@AfterAll
 	static void dropSchema(SessionFactoryScope factoryScope) {

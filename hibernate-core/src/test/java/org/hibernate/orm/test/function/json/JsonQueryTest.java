@@ -11,6 +11,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.JDBCException;
 import org.hibernate.cfg.QuerySettings;
 import org.hibernate.dialect.MariaDBDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.sql.exec.ExecutionException;
 
 import org.hibernate.testing.orm.junit.DialectFeatureChecks;
@@ -37,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @SessionFactory
 @ServiceRegistry(settings = @Setting(name = QuerySettings.JSON_FUNCTIONS_ENABLED, value = "true"))
 @RequiresDialectFeature( feature = DialectFeatureChecks.SupportsJsonQuery.class)
+@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner Dialect does not support JSON type")
 public class JsonQueryTest {
 
 	@BeforeEach

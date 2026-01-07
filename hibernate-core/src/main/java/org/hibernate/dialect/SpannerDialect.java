@@ -12,6 +12,7 @@ import org.hibernate.ScrollMode;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.model.FunctionContributions;
+import org.hibernate.boot.model.TypeContributions;
 import org.hibernate.boot.model.relational.Exportable;
 import org.hibernate.boot.model.relational.Sequence;
 import org.hibernate.boot.model.relational.SqlStringGenerationContext;
@@ -30,6 +31,7 @@ import org.hibernate.dialect.unique.UniqueDelegate;
 import org.hibernate.engine.jdbc.dialect.spi.DialectResolutionInfo;
 import org.hibernate.engine.jdbc.env.spi.IdentifierHelper;
 import org.hibernate.engine.jdbc.env.spi.IdentifierHelperBuilder;
+import org.hibernate.engine.jdbc.env.spi.NameQualifierSupport;
 import org.hibernate.engine.jdbc.env.spi.SchemaNameResolver;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -44,6 +46,7 @@ import org.hibernate.query.common.TemporalUnit;
 import org.hibernate.query.sqm.IntervalType;
 import org.hibernate.query.sqm.SetOperator;
 import org.hibernate.query.sqm.TrimSpec;
+import org.hibernate.service.ServiceRegistry;
 import org.hibernate.sql.ast.SqlAstTranslator;
 import org.hibernate.sql.ast.SqlAstTranslatorFactory;
 import org.hibernate.sql.ast.spi.LockingClauseStrategy;
@@ -130,11 +133,13 @@ public class SpannerDialect extends Dialect {
 				return "int64";
 
 			case REAL:
+				return "float32";
 			case FLOAT:
 			case DOUBLE:
+				return "float64";
 			case DECIMAL:
 			case NUMERIC:
-				return "float64";
+				return "numeric";
 
 			//there is no time type of any kind
 			case TIME:
@@ -205,6 +210,16 @@ public class SpannerDialect extends Dialect {
 	}
 
 	@Override
+	public void contributeTypes(TypeContributions typeContributions, ServiceRegistry serviceRegistry) {
+		super.contributeTypes( typeContributions, serviceRegistry );
+
+		// Register the custom Array Constructor to handle Integer[] -> Long[] conversion
+//		typeContributions.getTypeConfiguration()
+//				.getJdbcTypeRegistry()
+//				.addTypeConstructor( SpannerArrayJdbcTypeConstructor.INSTANCE );
+	}
+
+	@Override
 	public void initializeFunctionRegistry(FunctionContributions functionContributions) {
 		super.initializeFunctionRegistry( functionContributions );
 
@@ -253,7 +268,28 @@ public class SpannerDialect extends Dialect {
 		functionFactory.tanh();
 		functionFactory.moreHyperbolic();
 
-		functionFactory.bitandorxornot_bitAndOrXorNot();
+		functionRegistry.patternDescriptorBuilder( "bitand", "(?1 & ?2)" )
+				.setInvariantType( longType )
+				.setExactArgumentCount( 2 )
+				.register();
+
+		// bitor(a, b) -> (a | b)
+		functionRegistry.patternDescriptorBuilder( "bitor", "(?1 | ?2)" )
+				.setInvariantType( longType )
+				.setExactArgumentCount( 2 )
+				.register();
+
+		// bitxor(a, b) -> (a ^ b)
+		functionRegistry.patternDescriptorBuilder( "bitxor", "(?1 ^ ?2)" )
+				.setInvariantType( longType )
+				.setExactArgumentCount( 2 )
+				.register();
+
+		// bitnot(a) -> (~a)
+		functionRegistry.patternDescriptorBuilder( "bitnot", "(~?1)" )
+				.setInvariantType( longType )
+				.setExactArgumentCount( 1 )
+				.register();
 
 		functionRegistry.namedDescriptorBuilder( "is_inf" )
 				.setInvariantType( booleanType )
@@ -514,12 +550,27 @@ public class SpannerDialect extends Dialect {
 
 	@Override
 	public String getCreateTableString() {
-		return "create table if not exists";
+		return "create table";
 	}
 
 	@Override
 	public boolean supportsIfExistsBeforeTableName() {
 		return true;
+	}
+
+//	@Override
+//	public boolean supportsFromClauseInUpdate() {
+//		return true;
+//	}
+
+	@Override
+	public boolean supportsJoinInMutationStatementSubquery() {
+		return true;
+	}
+
+	@Override
+	public boolean supportsLobValueChangePropagation() {
+		return false;
 	}
 
 	/* SELECT-related functions */
@@ -692,6 +743,11 @@ public class SpannerDialect extends Dialect {
 	public SchemaNameResolver getSchemaNameResolver() {
 		// Spanner does not have a notion of database name schemas, so return "".
 		return (connection, dialect) -> "";
+	}
+
+	@Override
+	public NameQualifierSupport getNameQualifierSupport() {
+		return NameQualifierSupport.NONE;
 	}
 
 	@Override
@@ -981,6 +1037,43 @@ public class SpannerDialect extends Dialect {
 		// However, we return true here because `SpannerSqlAstTranslator` emulates
 		// lateral joins using the `UNNEST(ARRAY(select as struct..)) alias` syntax.
 		return true;
+	}
+
+	public boolean supportsColumnCheck() {
+		return false;
+	}
+
+	@Override
+	public boolean supportsTableCheck() {
+		return false;
+	}
+
+	@Override
+	public NullOrdering getNullOrdering() {
+		return NullOrdering.SMALLEST;
+	}
+
+	@Override
+	public boolean supportsNullPrecedence() {
+		return false;
+	}
+
+	@Override
+	public void appendLiteral(SqlAppender appender, String literal) {
+		appender.appendSql( '\'' );
+		for ( int i = 0; i < literal.length(); i++ ) {
+			final char c = literal.charAt( i );
+			if ( c == '\'' ) {
+				// Spanner requires backslash escaping for quotes: \'
+				appender.appendSql( '\\' );
+			}
+			else if ( c == '\\' ) {
+				// Spanner requires backslash escaping for backslashes: \\
+				appender.appendSql( '\\' );
+			}
+			appender.appendSql( c );
+		}
+		appender.appendSql( '\'' );
 	}
 
 	/* Type conversion and casting */

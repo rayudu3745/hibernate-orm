@@ -8,9 +8,11 @@ import java.util.BitSet;
 
 import org.hibernate.annotations.Type;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -68,6 +70,10 @@ public class BitSetUserTypeTest {
 	}
 
 	@Test
+	@SkipForDialect(
+			dialectClass = SpannerDialect.class,
+			reason = "Test uses ANSI double quotes for identifiers in a native query; Spanner treats these as string literals and requires backticks for identifiers"
+	)
 	public void testNativeQuery(SessionFactoryScope scope) {
 		BitSet bitSet = BitSet.valueOf(new long[] {1, 2, 3});
 

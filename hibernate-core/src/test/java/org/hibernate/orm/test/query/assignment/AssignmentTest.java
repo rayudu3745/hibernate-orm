@@ -7,6 +7,7 @@ package org.hibernate.orm.test.query.assignment;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.metamodel.SingularAttribute;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.assignment.Assignment;
 import org.hibernate.query.restriction.Path;
 import org.hibernate.query.restriction.Restriction;
@@ -17,6 +18,7 @@ import org.hibernate.query.specification.UpdateSpecification;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -146,6 +148,7 @@ public class AssignmentTest {
 		});
 	}
 
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support escape in like")
 	@Test void testDelete(SessionFactoryScope scope) {
 		var bookType = scope.getSessionFactory().getJpaMetamodel().findEntityType(Book.class);
 		assertNotNull(  bookType );
@@ -173,6 +176,7 @@ public class AssignmentTest {
 
 	}
 
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support escape in like")
 	@Test void testCriteriaDelete(SessionFactoryScope scope) {
 		var bookType = scope.getSessionFactory().getJpaMetamodel().findEntityType(Book.class);
 		assertNotNull(  bookType );

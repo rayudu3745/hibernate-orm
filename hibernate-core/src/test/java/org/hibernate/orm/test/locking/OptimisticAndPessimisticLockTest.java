@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import org.hibernate.LockMode;
 import org.hibernate.dialect.CockroachDialect;
 import org.hibernate.dialect.MariaDBDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.orm.junit.SessionFactory;
@@ -33,6 +34,8 @@ import jakarta.persistence.Version;
 @SkipForDialect(dialectClass = MariaDBDialect.class, majorVersion = 11, minorVersion = 6, microVersion = 2,
 		versionMatchMode = VersionMatchMode.SAME_OR_NEWER,
 		reason = "MariaDB will throw an error DB_RECORD_CHANGED when acquiring a lock on a record that have changed")
+@SkipForDialect(dialectClass = SpannerDialect.class,
+		reason = "Spanner uses SERIALIZABLE isolation, and does not support this")
 public class OptimisticAndPessimisticLockTest {
 
 	public Stream<LockMode> pessimisticLockModes() {

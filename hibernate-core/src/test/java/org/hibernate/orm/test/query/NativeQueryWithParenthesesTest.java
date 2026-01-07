@@ -35,7 +35,7 @@ public class NativeQueryWithParenthesesTest {
 				entityManager ->
 						entityManager.createNativeQuery(
 								"(SELECT p.id, p.name FROM Person p WHERE p.name LIKE 'A%') " +
-										"UNION " +
+								"UNION DISTINCT" +
 										"(SELECT p.id, p.name FROM Person p WHERE p.name LIKE 'B%')",
 								Person.class
 						).getResultList()

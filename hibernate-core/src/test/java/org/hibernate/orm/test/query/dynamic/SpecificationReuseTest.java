@@ -6,6 +6,7 @@ package org.hibernate.orm.test.query.dynamic;
 
 import java.util.function.Consumer;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.Order;
 import org.hibernate.query.restriction.Restriction;
 import org.hibernate.query.specification.MutationSpecification;
@@ -15,6 +16,7 @@ import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.Jira;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Jira( "https://hibernate.atlassian.net/browse/HHH-19781" )
 public class SpecificationReuseTest {
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not escape with like clause")
 	public void dynamicSelect(SessionFactoryScope scope) {
 		final var inspector = scope.getCollectingStatementInspector();
 		scope.inTransaction( session -> {
@@ -45,6 +48,7 @@ public class SpecificationReuseTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not escape with like clause")
 	public void hqlSelect(SessionFactoryScope scope) {
 		final var inspector = scope.getCollectingStatementInspector();
 		scope.inTransaction( session -> {
@@ -61,6 +65,7 @@ public class SpecificationReuseTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not escape with like clause")
 	public void criteriaSelect(SessionFactoryScope scope) {
 		final var inspector = scope.getCollectingStatementInspector();
 		scope.inTransaction( session -> {

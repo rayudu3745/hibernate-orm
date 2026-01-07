@@ -25,6 +25,7 @@ import org.hibernate.dialect.DB2Dialect;
 import org.hibernate.dialect.OracleDialect;
 import org.hibernate.dialect.PostgreSQLDialect;
 import org.hibernate.dialect.PostgresPlusDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.dialect.SybaseDialect;
 import org.hibernate.orm.test.jpa.Distributor;
 import org.hibernate.orm.test.jpa.Item;
@@ -797,6 +798,7 @@ public class QueryTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner doesn't support escape with like")
 	public void testEscapeCharacter(EntityManagerFactoryScope scope) {
 		final Item item = new Item( "Mouse", "Micro_oft mouse" );
 		final Item item2 = new Item( "Computer", "Dell computer" );
@@ -861,6 +863,8 @@ public class QueryTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner doesn't support DATE and TIMESTAMP comparison")
 	public void testExplicitPositionalParameter(EntityManagerFactoryScope scope) {
 		scope.inTransaction( entityManager -> {
 			Wallet w = new Wallet();

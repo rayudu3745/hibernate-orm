@@ -16,9 +16,11 @@ import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.EntityType;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.hibernate.testing.orm.junit.EntityManagerFactoryScope;
 import org.hibernate.testing.orm.junit.Jpa;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.Test;
 
 
@@ -76,6 +78,8 @@ public class CriteriaUpdateWithParametersTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner strict typing requires explicit CAST for untyped NULL parameters in UPDATE ... SET")
 	public void testCriteriaUpdate3(EntityManagerFactoryScope scope) {
 		scope.inTransaction( em -> {
 			// test separate value-bind parameters

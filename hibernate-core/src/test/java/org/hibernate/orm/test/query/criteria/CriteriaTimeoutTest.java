@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.hibernate.Session;
 import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.jpa.SpecHints;
 import org.hibernate.query.sqm.internal.SqmCriteriaNodeBuilder;
 import org.hibernate.query.sqm.tree.insert.SqmInsertSelectStatement;
@@ -24,6 +25,7 @@ import org.hibernate.testing.orm.junit.Jpa;
 import org.hibernate.testing.orm.junit.RequiresDialectFeature;
 import org.hibernate.testing.orm.junit.Setting;
 import org.hibernate.testing.orm.junit.SettingProvider;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -125,6 +127,7 @@ public class CriteriaTimeoutTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support row_number window function")
 	public void testCreateMutationQueryCriteriaInsertSelect(EntityManagerFactoryScope scope) {
 		scope.inTransaction( entityManager -> {
 			final Session session = entityManager.unwrap( Session.class );

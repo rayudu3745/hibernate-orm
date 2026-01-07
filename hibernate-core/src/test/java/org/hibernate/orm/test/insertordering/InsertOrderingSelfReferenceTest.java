@@ -15,6 +15,7 @@ import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.SortNatural;
 import org.hibernate.community.dialect.AltibaseDialect;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,10 @@ import jakarta.persistence.OneToMany;
  */
 @JiraKey(value = "HHH-14227")
 @SkipForDialect( dialectClass = AltibaseDialect.class, reason = "'TYPE' is not escaped even though autoQuoteKeywords is enabled")
+@SkipForDialect(
+		dialectClass = SpannerDialect.class,
+		reason = "Test assertion hardcodes double-quotes for identifiers, but Spanner uses backticks due to keyword collision with 'Parameter'."
+)
 public class InsertOrderingSelfReferenceTest extends BaseInsertOrderingTest {
 
 	@Override

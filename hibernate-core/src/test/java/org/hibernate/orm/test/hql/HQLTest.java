@@ -20,6 +20,7 @@ import org.hibernate.dialect.MySQLDialect;
 import org.hibernate.dialect.OracleDialect;
 import org.hibernate.dialect.PostgreSQLDialect;
 import org.hibernate.dialect.SQLServerDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.dialect.SybaseASEDialect;
 import org.hibernate.query.QueryProducer;
 import org.hibernate.testing.orm.domain.userguide.Account;
@@ -1665,6 +1666,7 @@ public class HQLTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner doesn't support locate function")
 	public void test_hql_position_function_example(SessionFactoryScope factoryScope) {
 		factoryScope.inTransaction( entityManager -> {
 			//tag::hql-position-function-example[]
@@ -1724,6 +1726,8 @@ public class HQLTest {
 	@Test
 	@SkipForDialect(dialectClass = SQLServerDialect.class)
 	@SkipForDialect(dialectClass = DerbyDialect.class, reason = "Comparisons between 'DATE' and 'TIMESTAMP' are not supported")
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Comparisons between 'DATE' and 'TIMESTAMP' are not supported")
 	public void test_hql_current_date_function_example(SessionFactoryScope factoryScope) {
 		factoryScope.inTransaction( entityManager -> {
 			//tag::hql-current-date-function-example[]
@@ -1786,6 +1790,7 @@ public class HQLTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner doesn't support VAR_POP")
 	public void test_var_function_example(SessionFactoryScope factoryScope) {
 		factoryScope.inTransaction( entityManager -> {
 			//tag::hql-native-function-example[]
@@ -1894,8 +1899,12 @@ public class HQLTest {
 
 	@Test
 	public void test_hql_collection_expressions_example_1(SessionFactoryScope factoryScope) {
+		// Spanner does not guarantee result ordering without an explicit ORDER BY.
+		// Since this test relies on retrieving a specific element by index (.get(1)),
+		// we enforce ordering to ensure deterministic behavior and prevent test flakiness.
 		factoryScope.inTransaction( entityManager -> {
-			Call call = entityManager.createQuery("select c from Call c", Call.class).getResultList().get(1);
+			Call call = entityManager.createQuery( "select c from Call c order by c.id", Call.class ).getResultList()
+					.get( 1 );
 			//tag::hql-collection-expressions-example[]
 			List<Phone> phones = entityManager.createQuery(
 				"select p " +
@@ -1911,8 +1920,12 @@ public class HQLTest {
 
 	@Test
 	public void test_hql_collection_expressions_example_2(SessionFactoryScope factoryScope) {
+		// Spanner does not guarantee result ordering without an explicit ORDER BY.
+		// Since this test relies on retrieving a specific element by index (.get(1)),
+		// we enforce ordering to ensure deterministic behavior and prevent test flakiness.
 		factoryScope.inTransaction( entityManager -> {
-			Call call = entityManager.createQuery("select c from Call c", Call.class).getResultList().get(0);
+			Call call = entityManager.createQuery( "select c from Call c order by c.id", Call.class ).getResultList()
+					.get( 0 );
 			//tag::hql-collection-expressions-example[]
 
 			List<Phone> phones = entityManager.createQuery(
@@ -1946,7 +1959,8 @@ public class HQLTest {
 	@Test
 	public void test_hql_collection_expressions_example_5(SessionFactoryScope factoryScope) {
 		factoryScope.inTransaction( entityManager -> {
-			Call call = entityManager.createQuery("select c from Call c", Call.class).getResultList().get(0);
+			Call call = entityManager.createQuery( "select c from Call c order by c.id", Call.class ).getResultList()
+					.get( 0 );
 			Phone phone = call.getPhone();
 			//tag::hql-collection-expressions-some-example[]
 
@@ -2000,6 +2014,8 @@ public class HQLTest {
 
 	@Test
 	@SkipForDialect(dialectClass = DerbyDialect.class, reason = "Comparisons between 'DATE' and 'TIMESTAMP' are not supported")
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Comparisons between 'DATE' and 'TIMESTAMP' are not supported")
 	public void test_hql_collection_expressions_example_8(SessionFactoryScope factoryScope) {
 		factoryScope.inTransaction( entityManager -> {
 			//tag::hql-collection-expressions-all-example[]
@@ -2609,6 +2625,7 @@ public class HQLTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support escape in like predicate")
 	public void test_hql_like_predicate_escape_example(SessionFactoryScope factoryScope) {
 		factoryScope.inTransaction( entityManager -> {
 			//tag::hql-like-predicate-escape-example[]
@@ -3149,7 +3166,7 @@ public class HQLTest {
 	}
 
 	@Test
-	@RequiresDialectFeature(feature = DialectFeatureChecks.SupportsRecursiveCtes.class )
+	@RequiresDialectFeature(feature = DialectFeatureChecks.SupportsRecursiveCtes.class)
 	public void test_hql_cte_recursive_search_example(SessionFactoryScope factoryScope) {
 		factoryScope.inTransaction( entityManager -> {
 			//tag::hql-cte-recursive-search-example[]

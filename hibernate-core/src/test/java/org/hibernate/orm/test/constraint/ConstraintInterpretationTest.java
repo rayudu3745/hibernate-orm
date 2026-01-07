@@ -17,9 +17,11 @@ import org.hibernate.community.dialect.InformixDialect;
 import org.hibernate.dialect.CockroachDialect;
 import org.hibernate.dialect.DB2Dialect;
 import org.hibernate.dialect.HANADialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.testing.orm.junit.EntityManagerFactoryScope;
 import org.hibernate.testing.orm.junit.Jpa;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.Test;
 
 
@@ -29,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 
 @Jpa(annotatedClasses = {ConstraintInterpretationTest.Enttity1.class, ConstraintInterpretationTest.Entity2.class})
+@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner Dialect does not support constraints")
 public class ConstraintInterpretationTest {
 	@Test void testNotNullPrimaryKey(EntityManagerFactoryScope scope) {
 		scope.inTransaction( em -> {

@@ -44,7 +44,7 @@ public class QueryTimeOutTest extends BaseSessionFactoryFunctionalTest {
 
 	private static final PreparedStatementSpyConnectionProvider CONNECTION_PROVIDER =
 			new PreparedStatementSpyConnectionProvider();
-	private static final String QUERY = "update AnEntity set name='abc'";
+	private static final String QUERY = "update AnEntity set name='abc' where 1=1";
 	private String expectedSqlQuery;
 
 	@Override
@@ -83,7 +83,7 @@ public class QueryTimeOutTest extends BaseSessionFactoryFunctionalTest {
 			baseQuery = "update AnEntity set name=?";
 		}
 		else {
-			baseQuery = "update AnEntity ae1_0 set name=?";
+			baseQuery = "update AnEntity ae1_0 set name=? where 1=1";
 		}
 		expectedSqlQuery = baseQuery.replace(
 				"?",

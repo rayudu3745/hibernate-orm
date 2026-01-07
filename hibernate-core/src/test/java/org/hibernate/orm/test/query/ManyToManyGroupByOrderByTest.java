@@ -7,10 +7,12 @@ package org.hibernate.orm.test.query;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.Jira;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -110,6 +112,8 @@ public class ManyToManyGroupByOrderByTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner strict visibility check: ORDER BY expressions with SELECT DISTINCT must use aliases or ordinals")
 	public void testDistinctAndAggregates(SessionFactoryScope scope) {
 		// explicit join distinct
 		scope.inTransaction( session -> {

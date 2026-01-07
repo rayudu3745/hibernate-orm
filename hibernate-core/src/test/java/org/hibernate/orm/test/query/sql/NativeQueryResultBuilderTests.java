@@ -15,6 +15,7 @@ import org.hibernate.dialect.DB2Dialect;
 import org.hibernate.community.dialect.DerbyDialect;
 import org.hibernate.dialect.OracleDialect;
 import org.hibernate.dialect.SQLServerDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.dialect.SybaseDialect;
 import org.hibernate.metamodel.mapping.EntityMappingType;
 import org.hibernate.metamodel.mapping.ModelPart;
@@ -57,6 +58,7 @@ public class NativeQueryResultBuilderTests {
 	public static final String URL_STRING = "http://hibernate.org";
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner maps integer to bigint")
 	public void fullyImplicitTest(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -106,6 +108,7 @@ public class NativeQueryResultBuilderTests {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner maps integer to bigint")
 	public void explicitOrderTest(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -133,6 +136,7 @@ public class NativeQueryResultBuilderTests {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner maps integer to bigint")
 	public void explicitEnumTypeTest(SessionFactoryScope scope) {
 		final String sql = "select id, gender, ordinal_gender from EntityOfBasics";
 
@@ -183,6 +187,7 @@ public class NativeQueryResultBuilderTests {
 		);
 	}
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner maps char to string")
 	public void explicitConversionTest(SessionFactoryScope scope) {
 		final String sql = "select converted_gender from EntityOfBasics";
 

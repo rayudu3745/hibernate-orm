@@ -7,6 +7,7 @@ package org.hibernate.orm.test.query.hql;
 import java.util.List;
 
 import org.hibernate.community.dialect.InformixDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.Query;
 
 import org.hibernate.testing.orm.domain.StandardDomainModel;
@@ -95,6 +96,7 @@ public class LikeEscapeDefaultTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support escape character")
 	public void testExplicitEscapeLiteralBackslash(SessionFactoryScope scope) {
 		scope.inTransaction( session -> {
 			Query<BasicEntity> q = session.createQuery(
@@ -108,6 +110,7 @@ public class LikeEscapeDefaultTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support escape character")
 	public void testExplicitEscapeLiteralOtherChar(SessionFactoryScope scope) {
 		scope.inTransaction( session -> {
 			Query<BasicEntity> q = session.createQuery(

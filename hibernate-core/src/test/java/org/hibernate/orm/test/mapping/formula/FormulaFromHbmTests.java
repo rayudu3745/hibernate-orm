@@ -8,6 +8,7 @@ import java.sql.Types;
 
 import org.hibernate.community.dialect.InformixDialect;
 import org.hibernate.dialect.MySQLDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.dialect.SybaseASEDialect;
 import org.hibernate.mapping.BasicValue;
 import org.hibernate.mapping.Formula;
@@ -70,6 +71,8 @@ public class FormulaFromHbmTests {
 			reason = "The MySQL JDBC driver doesn't support the JDBC escape for the concat function which is used in the mapping", matchSubTypes = true)
 	@SkipForDialect(dialectClass = InformixDialect.class,
 			reason = "The Informix JDBC driver doesn't support the JDBC escape for the concat function which is used in the mapping")
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "The Cloud Spanner JDBC driver does not support the {fn concat(...)} JDBC escape syntax")
 	public void testBasicHqlUse(SessionFactoryScope scope) {
 		scope.inTransaction(
 				(session) -> session.createQuery( "from EntityOfFormulas" ).list()

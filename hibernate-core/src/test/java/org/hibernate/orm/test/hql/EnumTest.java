@@ -4,11 +4,13 @@
  */
 package org.hibernate.orm.test.hql;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.domain.gambit.EntityOfBasics;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.Jira;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -99,6 +101,8 @@ public class EnumTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner has native string function which doesn't work on enums")
 	public void testStringFunctionOnStringEnum(SessionFactoryScope scope) {
 		scope.inTransaction( session -> {
 
@@ -127,6 +131,8 @@ public class EnumTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Spanner has native string function which doesn't work on enums")
 	public void testStringFunctionOnOrdinalEnum(SessionFactoryScope scope) {
 		scope.inTransaction( session -> {
 			//tag::hql-string-function-example[]

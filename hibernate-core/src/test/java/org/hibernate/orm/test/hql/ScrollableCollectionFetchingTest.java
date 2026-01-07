@@ -11,6 +11,7 @@ import org.hibernate.dialect.HANADialect;
 import org.hibernate.dialect.DB2Dialect;
 import org.hibernate.community.dialect.DerbyDialect;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.dialect.SybaseASEDialect;
 import org.hibernate.query.SemanticException;
 import org.hibernate.query.sqm.UnknownPathException;
@@ -97,6 +98,7 @@ public class ScrollableCollectionFetchingTest {
 	@Test
 	@SkipForDialect(dialectClass = SybaseASEDialect.class, majorVersion = 15, versionMatchMode = VersionMatchMode.SAME_OR_OLDER, reason = "HHH-5229")
 	@SkipForDialect(dialectClass = HANADialect.class, reason = "HANA only supports forward-only cursors.")
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner only supports forward-only cursors.")
 	public void testScrollingJoinFetchesEmptyResultSet(SessionFactoryScope scope) {
 		scope.inTransaction(
 				s -> {

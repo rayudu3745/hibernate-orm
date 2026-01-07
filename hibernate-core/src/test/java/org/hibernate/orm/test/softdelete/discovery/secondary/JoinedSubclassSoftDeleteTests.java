@@ -44,8 +44,9 @@ public class JoinedSubclassSoftDeleteTests {
 	void dropTestData(SessionFactoryScope scope) {
 		scope.inTransaction( (session) -> session.doWork( (connection) -> {
 			final Statement statement = connection.createStatement();
-			statement.execute( "delete from joined_sub" );
-			statement.execute( "delete from joined_root" );
+			// Added "where 1=1" to satisfy Spanner's requirement for a WHERE clause in DML
+			statement.execute( "delete from joined_sub where 1=1" );
+			statement.execute( "delete from joined_root where 1=1" );
 		} ) );
 	}
 

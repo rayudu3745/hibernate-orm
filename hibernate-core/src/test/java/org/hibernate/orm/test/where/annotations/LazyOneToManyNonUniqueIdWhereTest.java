@@ -13,10 +13,12 @@ import jakarta.persistence.Table;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +48,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 		LazyOneToManyNonUniqueIdWhereTest.Size.class
 })
 @SessionFactory
+@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not varchar syntax for type declaration")
 public class LazyOneToManyNonUniqueIdWhereTest {
 	@BeforeEach
 	void createSchema(SessionFactoryScope factoryScope) {

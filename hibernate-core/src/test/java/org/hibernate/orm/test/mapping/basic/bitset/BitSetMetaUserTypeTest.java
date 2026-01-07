@@ -13,7 +13,9 @@ import jakarta.persistence.NamedNativeQuery;
 import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Type;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.Test;
 
 import java.lang.annotation.Retention;
@@ -52,6 +54,10 @@ public class BitSetMetaUserTypeTest extends BaseCoreFunctionalTestCase {
 	}
 
 	@Test
+	@SkipForDialect(
+			dialectClass = SpannerDialect.class,
+			reason = "Test uses ANSI double quotes for identifiers in a native query; Spanner treats these as string literals and requires backticks for identifiers"
+	)
 	public void testNativeQuery() {
 		BitSet bitSet = BitSet.valueOf(new long[] {1, 2, 3});
 

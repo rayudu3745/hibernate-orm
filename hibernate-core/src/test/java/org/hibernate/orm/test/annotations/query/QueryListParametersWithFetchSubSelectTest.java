@@ -66,7 +66,8 @@ public class QueryListParametersWithFetchSubSelectTest {
 		sqlStatementInterceptor.clear();
 
 		scope.inTransaction( s -> {
-			TypedQuery<Parent> query = s.createQuery( "select p from Parent p where id in :ids", Parent.class );
+			TypedQuery<Parent> query = s.createQuery( "select p from Parent p where id in :ids order by id",
+					Parent.class );
 			query.setParameter( "ids", Arrays.asList( 0, 1, 2 ) );
 			List<Parent> results = query.getResultList();
 			assertThat( results )
@@ -87,7 +88,8 @@ public class QueryListParametersWithFetchSubSelectTest {
 		sqlStatementInterceptor.clear();
 
 		scope.inTransaction( s -> {
-			TypedQuery<Parent> query = s.createQuery( "select p from Parent p where id in :ids", Parent.class );
+			TypedQuery<Parent> query = s.createQuery( "select p from Parent p where id in :ids order by id",
+					Parent.class );
 
 			query.setParameter( "ids", Arrays.asList( 0, 1, 2, 3 ) );
 			List<Parent> results = query.getResultList();
@@ -122,7 +124,8 @@ public class QueryListParametersWithFetchSubSelectTest {
 		sqlStatementInterceptor.clear();
 
 		scope.inTransaction( s -> {
-			TypedQuery<Parent> query = s.createQuery( "select p from Parent p where id in ?1", Parent.class );
+			TypedQuery<Parent> query = s.createQuery( "select p from Parent p where id in ?1 order by id",
+					Parent.class );
 
 			query.setParameter( 1, Arrays.asList( 0, 1, 2, 3 ) );
 			List<Parent> results = query.getResultList();

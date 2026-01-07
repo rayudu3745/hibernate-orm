@@ -44,7 +44,7 @@ import static jakarta.persistence.FetchType.LAZY;
 		integrationSettings = @Setting(name = JdbcSettings.SHOW_SQL, value = "true")
 )
 @JiraKey("HHH-18750")
-class ManyToOneWithAnyAndSecondaryTable {
+public class ManyToOneWithAnyAndSecondaryTable {
 
 	@Test
 	void testMappingManyToOneMappedByAnyPersistedInSecondaryTable(EntityManagerFactoryScope scope) {

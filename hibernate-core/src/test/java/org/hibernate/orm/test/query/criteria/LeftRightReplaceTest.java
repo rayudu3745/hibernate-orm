@@ -5,6 +5,7 @@
 package org.hibernate.orm.test.query.criteria;
 
 import org.hibernate.community.dialect.FirebirdDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.EntityManagerFactoryScope;
 import org.hibernate.testing.orm.junit.Jpa;
 import org.hibernate.testing.orm.junit.SkipForDialect;
@@ -15,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Jpa
 class LeftRightReplaceTest {
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner doesn't support left right functions")
 	void testLeftRight(EntityManagerFactoryScope scope) {
 		scope.inEntityManager( entityManager -> {
 			var builder = entityManager.getCriteriaBuilder();

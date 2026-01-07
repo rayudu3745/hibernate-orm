@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.hibernate.dialect.MariaDBDialect;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
@@ -53,6 +54,7 @@ public class MapIndexFormulaTest {
 
 	@Test
 	@SkipForDialect( dialectClass = MariaDBDialect.class, reason = "HHH-18433")
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Cannot modify a primary key column with UPDATE")
 	public void testIndexFormulaMap(SessionFactoryScope scope) {
 		User turin = new User( "turin", "tiger" );
 		scope.inTransaction(

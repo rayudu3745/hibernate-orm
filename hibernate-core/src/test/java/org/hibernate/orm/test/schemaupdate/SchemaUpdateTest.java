@@ -25,6 +25,7 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.community.dialect.TiDBDialect;
 import org.hibernate.dialect.SQLServerDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.dialect.SybaseDialect;
 import org.hibernate.engine.jdbc.env.spi.IdentifierHelper;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
@@ -68,6 +69,7 @@ import static org.hibernate.cfg.SchemaToolingSettings.HBM2DDL_JDBC_METADATA_EXTR
 @SkipForDialect(dialectClass = SQLServerDialect.class)
 @SkipForDialect(dialectClass = SybaseDialect.class)
 @SkipForDialect(dialectClass = TiDBDialect.class)
+@SkipForDialect(dialectClass = SpannerDialect.class)
 @ParameterizedClass
 @MethodSource("parameters")
 @TestInstance( TestInstance.Lifecycle.PER_METHOD )

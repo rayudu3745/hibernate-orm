@@ -24,6 +24,7 @@ import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 
 import org.hibernate.dialect.OracleDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.junit.EntityManagerFactoryScope;
 import org.hibernate.testing.orm.junit.Jpa;
 import org.hibernate.testing.orm.junit.SkipForDialect;
@@ -35,6 +36,9 @@ import org.junit.jupiter.api.Test;
  * @author Steve Ebersole
  */
 @SkipForDialect(dialectClass = OracleDialect.class, matchSubTypes = true, reason = "https://hibernate.atlassian.net/browse/HHH-10323")
+@SkipForDialect(
+		dialectClass = SpannerDialect.class,
+		reason = "Spanner maps SQL INTEGER to INT64")
 @Jpa(annotatedClasses = {ConstructorResultNativeQueryTest.Person.class})
 public class ConstructorResultNativeQueryTest {
 	@Entity( name = "Person" )

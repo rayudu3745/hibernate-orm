@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.community.dialect.InformixDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.Query;
 import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.hibernate.query.criteria.JpaCriteriaQuery;
@@ -42,6 +43,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Jira( "https://hibernate.atlassian.net/browse/HHH-17769" )
 @SkipForDialect(dialectClass = InformixDialect.class,
 		reason = "skip with CTEs seems to be broken")
+@SkipForDialect(dialectClass = SpannerDialect.class,
+		reason = "Support for CTEs to be added")
 public class CriteriaCteOffsetFetchTest {
 	@BeforeAll
 	public void setUp(SessionFactoryScope scope) {

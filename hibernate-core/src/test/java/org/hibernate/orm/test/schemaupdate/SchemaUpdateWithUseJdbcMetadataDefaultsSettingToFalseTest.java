@@ -109,7 +109,7 @@ public class SchemaUpdateWithUseJdbcMetadataDefaultsSettingToFalseTest {
 
 	private void checkSchemaHasBeenGenerated() throws Exception {
 		String fileContent = new String( Files.readAllBytes( createOutputFile.toPath() ) );
-		Pattern fileContentPattern = Pattern.compile( "create( (column|row))? table my_test_entity" );
+		Pattern fileContentPattern = Pattern.compile( "create( (column|row))? table (if not exists )?my_test_entity" );
 		Matcher fileContentMatcher = fileContentPattern.matcher( fileContent.toLowerCase() );
 		assertThat(
 				"The schema has not been correctly generated, Script file : " + fileContent.toLowerCase(),
