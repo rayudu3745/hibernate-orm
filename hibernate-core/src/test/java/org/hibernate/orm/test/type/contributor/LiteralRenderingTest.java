@@ -26,9 +26,11 @@ import java.util.TimeZone;
 import java.util.UUID;
 
 import org.hibernate.community.dialect.InformixDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.hibernate.query.criteria.JpaCriteriaQuery;
 
+import org.hibernate.testing.orm.junit.DialectContext;
 import org.hibernate.testing.orm.junit.JiraKey;
 import org.hibernate.testing.orm.domain.StandardDomainModel;
 import org.hibernate.testing.orm.domain.gambit.BasicEntity;
@@ -39,6 +41,8 @@ import org.hibernate.testing.orm.junit.SessionFactoryScope;
 import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 @ServiceRegistry
 @DomainModel( standardModels = StandardDomainModel.GAMBIT )
@@ -93,6 +97,14 @@ public class LiteralRenderingTest {
 	@ParameterizedTest
 	@MethodSource("literalValues")
 	public void testIdVersionFunctions(Object literalValue, SessionFactoryScope scope) {
+		if ( DialectContext.getDialect() instanceof SpannerDialect ) {
+			boolean isUnsupported = literalValue instanceof java.time.LocalTime
+									|| literalValue instanceof java.sql.Time
+									|| literalValue instanceof java.time.OffsetTime
+									|| literalValue instanceof java.time.LocalDateTime;
+			assumeFalse( isUnsupported,
+					"Skipping Spanner test for unsupported type: " + literalValue.getClass().getSimpleName() );
+		}
 		scope.inTransaction(
 				session -> {
 					HibernateCriteriaBuilder cb = session.getCriteriaBuilder();
