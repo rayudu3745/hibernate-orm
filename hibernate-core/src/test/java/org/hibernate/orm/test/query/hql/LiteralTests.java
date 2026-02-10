@@ -4,6 +4,7 @@
  */
 package org.hibernate.orm.test.query.hql;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.query.Query;
 import org.hibernate.testing.orm.domain.StandardDomainModel;
 import org.hibernate.testing.orm.domain.animal.Classification;
@@ -95,6 +96,7 @@ public class LiteralTests {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner doesn't support time literals")
 	public void testJdbcTimeLiteral(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -115,6 +117,8 @@ public class LiteralTests {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Wall clock time (LocalDateTime) is ambiguous for Spanner")
 	public void testJdbcTimestampLiteral(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -134,6 +138,7 @@ public class LiteralTests {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner doesn't support time literals")
 	public void testLocalTimeLiteral(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -143,6 +148,8 @@ public class LiteralTests {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Wall clock time (LocalDateTime) is ambiguous for Spanner")
 	public void testDateTimeLiteral(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -158,6 +165,8 @@ public class LiteralTests {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Wall clock time (LocalDateTime) is ambiguous for Spanner")
 	public void isolated(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -168,6 +177,8 @@ public class LiteralTests {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Wall clock time (LocalDateTime) is ambiguous for Spanner")
 	public void testTimestampLiteral(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -228,6 +239,7 @@ public class LiteralTests {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner doesn't support time literals")
 	public void testTimeLiteral(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -240,6 +252,8 @@ public class LiteralTests {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class,
+			reason = "Wall clock time (LocalDateTime) is ambiguous for Spanner")
 	public void testSelectDatetimeLiterals(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {

@@ -4,10 +4,12 @@
  */
 package org.hibernate.orm.test.query.sqm.exec;
 
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.testing.orm.domain.StandardDomainModel;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.Test;
 
 @DomainModel( standardModels = StandardDomainModel.GAMBIT )
@@ -33,6 +35,7 @@ public class LiteralTests {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner doesn't support time literals")
 	public void testTimeLiteral(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
