@@ -843,7 +843,8 @@ abstract public class DialectFeatureChecks {
 			return definesFunction( dialect, "json_query" )
 				&& !( dialect instanceof SQLServerDialect )
 				&& !( dialect instanceof H2Dialect )
-				&& !( dialect instanceof CockroachDialect );
+				&& !( dialect instanceof CockroachDialect )
+				&& !( dialect instanceof org.hibernate.dialect.SpannerDialect );
 		}
 	}
 
@@ -875,7 +876,9 @@ abstract public class DialectFeatureChecks {
 				// Cockroach doesn't have a native json_value function
 				&& !( dialect instanceof CockroachDialect )
 				// PostgreSQL added support for native json_value in version 17
-				&& !( dialect instanceof PostgreSQLDialect && dialect.getVersion().isBefore( 17 ) );
+				&& !( dialect instanceof PostgreSQLDialect && dialect.getVersion().isBefore( 17 ) )
+				// Spanner doesn't support the ON ERROR and ON EMPTY clauses
+				&& !( dialect instanceof org.hibernate.dialect.SpannerDialect );
 		}
 	}
 

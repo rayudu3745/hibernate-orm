@@ -124,6 +124,7 @@ public class JsonFunctionTests {
 
 	@Test
 	@RequiresDialectFeature(feature = DialectFeatureChecks.SupportsJsonValue.class)
+	@SkipForDialect(dialectClass = org.hibernate.dialect.SpannerDialect.class, reason = "Spanner returns SQL NULL for non-scalar accesses instead of stringified json")
 	public void testJsonValue(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -161,6 +162,7 @@ public class JsonFunctionTests {
 
 	@Test
 	@RequiresDialectFeature(feature = DialectFeatureChecks.SupportsJsonValue.class)
+	@SkipForDialect(dialectClass = org.hibernate.dialect.SpannerDialect.class, reason = "Spanner does not support PASSING parameters in json path")
 	public void testJsonValueExpression(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -175,6 +177,7 @@ public class JsonFunctionTests {
 
 	@Test
 	@RequiresDialectFeature(feature = DialectFeatureChecks.SupportsJsonValue.class)
+	@SkipForDialect(dialectClass = org.hibernate.dialect.SpannerDialect.class, reason = "Spanner does not support the returning clause for json_value natively")
 	public void testJsonValueBoolean(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -189,6 +192,7 @@ public class JsonFunctionTests {
 
 	@Test
 	@RequiresDialectFeature(feature = DialectFeatureChecks.SupportsJsonQuery.class)
+	@SkipForDialect(dialectClass = org.hibernate.dialect.SpannerDialect.class, reason = "Spanner does not support PASSING parameters in json path")
 	public void testJsonQuery(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -294,7 +298,8 @@ public class JsonFunctionTests {
 					assertEquals( entity.json.get( "theString" ), nested.get( "theString" ) );
 					assertEquals( entity.json.get( "theBoolean" ), nested.get( "theBoolean" ) );
 					// HSQLDB bug: https://sourceforge.net/p/hsqldb/bugs/1720/
-					if ( !( DialectContext.getDialect() instanceof HSQLDialect ) ) {
+					// Spanner keeps null properties directly within its native JSON_OBJECT function
+					if ( !( DialectContext.getDialect() instanceof HSQLDialect ) && !( DialectContext.getDialect() instanceof org.hibernate.dialect.SpannerDialect ) ) {
 						assertFalse( nested.containsKey( "theNull" ) );
 					}
 					assertNull( nested.get( "theNull" ) );

@@ -9,14 +9,21 @@ import jakarta.persistence.Timeout;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.ScrollMode;
+
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.model.FunctionContributions;
 import org.hibernate.boot.model.relational.Exportable;
+import org.hibernate.dialect.aggregate.AggregateSupport;
+import org.hibernate.dialect.aggregate.SpannerAggregateSupport;
 import org.hibernate.boot.model.relational.Sequence;
 import org.hibernate.boot.model.relational.SqlStringGenerationContext;
 import org.hibernate.dialect.function.CommonFunctionFactory;
 import org.hibernate.dialect.function.FormatFunction;
+import org.hibernate.dialect.function.json.SpannerJsonArrayFunction;
+import org.hibernate.dialect.function.json.SpannerJsonObjectFunction;
+import org.hibernate.dialect.function.json.SpannerJsonQueryFunction;
+import org.hibernate.dialect.function.json.SpannerJsonValueFunction;
 import org.hibernate.dialect.lock.LockingStrategy;
 import org.hibernate.dialect.lock.LockingStrategyException;
 import org.hibernate.dialect.lock.internal.NoLockingSupport;
@@ -43,6 +50,8 @@ import org.hibernate.query.SemanticException;
 import org.hibernate.query.common.TemporalUnit;
 import org.hibernate.query.sqm.IntervalType;
 import org.hibernate.query.sqm.SetOperator;
+import org.hibernate.sql.ast.SqlAstTranslator;
+import org.hibernate.sql.ast.spi.SqlAppender;
 import org.hibernate.query.sqm.TrimSpec;
 import org.hibernate.sql.ast.SqlAstTranslator;
 import org.hibernate.sql.ast.SqlAstTranslatorFactory;
@@ -55,7 +64,7 @@ import org.hibernate.sql.exec.spi.JdbcOperation;
 import org.hibernate.tool.schema.spi.Exporter;
 import org.hibernate.type.StandardBasicTypes;
 import org.hibernate.type.descriptor.java.PrimitiveByteArrayJavaType;
-
+import org.hibernate.dialect.type.SpannerJsonJdbcType;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -78,6 +87,7 @@ import static org.hibernate.type.SqlTypes.DECIMAL;
 import static org.hibernate.type.SqlTypes.DOUBLE;
 import static org.hibernate.type.SqlTypes.FLOAT;
 import static org.hibernate.type.SqlTypes.INTEGER;
+import static org.hibernate.type.SqlTypes.JSON;
 import static org.hibernate.type.SqlTypes.LONG32NVARCHAR;
 import static org.hibernate.type.SqlTypes.LONG32VARBINARY;
 import static org.hibernate.type.SqlTypes.LONG32VARCHAR;
@@ -96,6 +106,13 @@ import static org.hibernate.type.SqlTypes.VARCHAR;
 import static org.hibernate.type.descriptor.DateTimeUtils.appendAsDate;
 import static org.hibernate.type.descriptor.DateTimeUtils.appendAsTimestampWithMillis;
 import static org.hibernate.type.descriptor.DateTimeUtils.appendAsTimestampWithNanos;
+
+import org.hibernate.boot.model.TypeContributions;
+import org.hibernate.service.ServiceRegistry;
+import org.hibernate.type.SqlTypes;
+import org.hibernate.type.descriptor.jdbc.spi.JdbcTypeRegistry;
+import org.hibernate.type.descriptor.sql.internal.DdlTypeImpl;
+import org.hibernate.type.descriptor.sql.spi.DdlTypeRegistry;
 
 /**
  * A {@linkplain Dialect SQL dialect} for Cloud Spanner.
@@ -122,6 +139,42 @@ public class SpannerDialect extends Dialect {
 		super( ZERO_VERSION );
 	}
 
+	private static class SpannerUuidJdbcType extends org.hibernate.type.descriptor.jdbc.UUIDJdbcType {
+		public static final SpannerUuidJdbcType INSTANCE = new SpannerUuidJdbcType();
+
+		@Override
+		public <X> org.hibernate.type.descriptor.ValueExtractor<X> getExtractor(org.hibernate.type.descriptor.java.JavaType<X> javaType) {
+			return new org.hibernate.type.descriptor.jdbc.BasicExtractor<>( javaType, this ) {
+				@Override
+				protected X doExtract(java.sql.ResultSet rs, int paramIndex, org.hibernate.type.descriptor.WrapperOptions options) throws java.sql.SQLException {
+					return getJavaType().wrap( rs.getString( paramIndex ), options );
+				}
+				@Override
+				protected X doExtract(java.sql.CallableStatement statement, int index, org.hibernate.type.descriptor.WrapperOptions options) throws java.sql.SQLException {
+					return getJavaType().wrap( statement.getString( index ), options );
+				}
+				@Override
+				protected X doExtract(java.sql.CallableStatement statement, String name, org.hibernate.type.descriptor.WrapperOptions options) throws java.sql.SQLException {
+					return getJavaType().wrap( statement.getString( name ), options );
+				}
+			};
+		}
+
+		@Override
+		public <X> org.hibernate.type.descriptor.ValueBinder<X> getBinder(org.hibernate.type.descriptor.java.JavaType<X> javaType) {
+			return new org.hibernate.type.descriptor.jdbc.BasicBinder<>( javaType, this ) {
+				@Override
+				protected void doBind(java.sql.PreparedStatement st, X value, int index, org.hibernate.type.descriptor.WrapperOptions options) throws java.sql.SQLException {
+					st.setString( index, getJavaType().unwrap( value, String.class, options ) );
+				}
+				@Override
+				protected void doBind(java.sql.CallableStatement st, X value, String name, org.hibernate.type.descriptor.WrapperOptions options) throws java.sql.SQLException {
+					st.setString( name, getJavaType().unwrap( value, String.class, options ) );
+				}
+			};
+		}
+	}
+
 	public SpannerDialect(DialectResolutionInfo info) {
 		super(info);
 	}
@@ -138,11 +191,16 @@ public class SpannerDialect extends Dialect {
 			case BIGINT:
 				return "int64";
 
+			case DECIMAL:
+			case NUMERIC:
+				return "numeric";
+
+			case JSON:
+				return "json";
+
 			case REAL:
 			case FLOAT:
 			case DOUBLE:
-			case DECIMAL:
-			case NUMERIC:
 				return "float64";
 
 			//there is no time type of any kind
@@ -156,6 +214,7 @@ public class SpannerDialect extends Dialect {
 			case NCHAR:
 			case VARCHAR:
 			case NVARCHAR:
+			case SqlTypes.UUID:
 				return "string($l)";
 
 			case BINARY:
@@ -182,6 +241,7 @@ public class SpannerDialect extends Dialect {
 			case NVARCHAR:
 			case LONG32VARCHAR:
 			case LONG32NVARCHAR:
+			case SqlTypes.UUID:
 				return "string";
 			case BINARY:
 			case VARBINARY:
@@ -372,14 +432,10 @@ public class SpannerDialect extends Dialect {
 				.register();
 
 		// JSON Functions
-		functionRegistry.namedDescriptorBuilder( "json_query" )
-				.setInvariantType( stringType )
-				.setExactArgumentCount( 2 )
-				.register();
-		functionRegistry.namedDescriptorBuilder( "json_value" )
-				.setInvariantType( stringType )
-				.setExactArgumentCount( 2 )
-				.register();
+		functionRegistry.register( "json_query", new SpannerJsonQueryFunction( functionContributions.getTypeConfiguration() ) );
+		functionRegistry.register( "json_value", new SpannerJsonValueFunction( functionContributions.getTypeConfiguration() ) );
+		functionRegistry.register( "json_array", new SpannerJsonArrayFunction( functionContributions.getTypeConfiguration() ) );
+		functionRegistry.register( "json_object", new SpannerJsonObjectFunction( functionContributions.getTypeConfiguration() ) );
 
 		// Array Functions
 		functionRegistry.namedDescriptorBuilder( "array" )
@@ -506,6 +562,23 @@ public class SpannerDialect extends Dialect {
 	}
 
 	@Override
+	protected void registerColumnTypes(TypeContributions typeContributions, ServiceRegistry serviceRegistry) {
+		super.registerColumnTypes( typeContributions, serviceRegistry );
+		JdbcTypeRegistry jdbcTypeRegistry = typeContributions.getTypeConfiguration().getJdbcTypeRegistry();
+		jdbcTypeRegistry.addDescriptorIfAbsent( SpannerJsonJdbcType.INSTANCE );
+		jdbcTypeRegistry.addDescriptorIfAbsent( org.hibernate.dialect.type.SpannerJsonArrayJdbcType.INSTANCE );
+		jdbcTypeRegistry.addDescriptorIfAbsent( SpannerUuidJdbcType.INSTANCE );
+		jdbcTypeRegistry.addTypeConstructor( org.hibernate.dialect.type.SpannerJsonArrayJdbcTypeConstructor.INSTANCE );
+		final DdlTypeRegistry ddlTypeRegistry = typeContributions.getTypeConfiguration().getDdlTypeRegistry();
+		ddlTypeRegistry.addDescriptor(
+				new DdlTypeImpl( SqlTypes.JSON, columnType( SqlTypes.JSON ), castType( SqlTypes.JSON ), this )
+		);
+		ddlTypeRegistry.addDescriptor(
+				new DdlTypeImpl( SqlTypes.UUID, columnType( SqlTypes.UUID ), castType( SqlTypes.UUID ), this )
+		);
+	}
+
+	@Override
 	public SqlAstTranslatorFactory getSqlAstTranslatorFactory() {
 		return new StandardSqlAstTranslatorFactory() {
 			@Override
@@ -519,6 +592,11 @@ public class SpannerDialect extends Dialect {
 	@Override
 	public Exporter<Table> getTableExporter() {
 		return this.spannerTableExporter;
+	}
+
+	@Override
+	public AggregateSupport getAggregateSupport() {
+		return SpannerAggregateSupport.INSTANCE;
 	}
 
 	@Override

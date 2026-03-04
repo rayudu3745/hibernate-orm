@@ -11,6 +11,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.JDBCException;
 import org.hibernate.cfg.QuerySettings;
 import org.hibernate.dialect.MariaDBDialect;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.sql.exec.ExecutionException;
 
 import org.hibernate.testing.orm.junit.DialectFeatureChecks;
@@ -72,6 +73,7 @@ public class JsonValueTest {
 	}
 
 	@Test
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support PASSING")
 	public void testPassing(SessionFactoryScope scope) {
 		scope.inSession( em -> {
 			//tag::hql-json-value-passing-example[]
@@ -95,6 +97,7 @@ public class JsonValueTest {
 
 	@Test
 	@SkipForDialect(dialectClass = MariaDBDialect.class, reason = "MariaDB reports the error 4038 as warning and simply returns null")
+	@SkipForDialect(dialectClass = SpannerDialect.class, reason = "Spanner does not support ON ERROR")
 	public void testOnError(SessionFactoryScope scope) {
 		scope.inSession( em -> {
 			try {
