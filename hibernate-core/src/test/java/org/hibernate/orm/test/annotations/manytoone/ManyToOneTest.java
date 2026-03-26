@@ -5,6 +5,7 @@
 package org.hibernate.orm.test.annotations.manytoone;
 
 import org.hibernate.Hibernate;
+import org.hibernate.dialect.SpannerDialect;
 import org.hibernate.orm.test.annotations.Company;
 import org.hibernate.orm.test.annotations.Customer;
 import org.hibernate.orm.test.annotations.Discount;
@@ -16,6 +17,7 @@ import org.hibernate.testing.orm.junit.ServiceRegistry;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
 import org.hibernate.testing.orm.junit.Setting;
+import org.hibernate.testing.orm.junit.SkipForDialect;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -124,6 +126,7 @@ public class ManyToOneTest {
 	}
 
 	@Test
+	@SkipForDialect( dialectClass = SpannerDialect.class, reason = "update fails if table name and column name are same")
 	public void testCascade(SessionFactoryScope factoryScope) {
 		factoryScope.inTransaction( (session) -> {
 			var discount = new Discount();
