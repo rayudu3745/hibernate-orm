@@ -215,6 +215,7 @@ public class SpannerDialect extends Dialect {
 	protected void initDefaultProperties() {
 		super.initDefaultProperties();
 		getDefaultProperties().setProperty( AvailableSettings.PREFERRED_POOLED_OPTIMIZER, "none" );
+		getDefaultProperties().setProperty( "hibernate.schema_management_tool", "org.hibernate.tool.schema.internal.SpannerSchemaManagementTool" );
 	}
 
 	@Override
